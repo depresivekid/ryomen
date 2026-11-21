@@ -1,23 +1,1210 @@
+
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#100d10"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="RYŌMEN"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><title>RYŌMEN</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#100d10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RYŌMEN">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>RYŌMEN</title>
+
 <style>
-:root{color-scheme:dark;--bg:#100d10;--panel:#191419;--panel2:#211920;--line:#382831;--red:#a83243;--red2:#d15b68;--text:#f2e9e9;--muted:#a99ba1;--gold:#c5a16c}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#39202b 0%,var(--bg) 48%);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100dvh}button,textarea,input{font:inherit}button{color:inherit}.app{max-width:760px;margin:auto;min-height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}header{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 12px;border-bottom:1px solid var(--line)}.brand{letter-spacing:.22em;font:600 18px Georgia,serif}.brand span{color:var(--red2)}.sub{font-size:10px;letter-spacing:.18em;color:var(--muted);margin-top:2px}.iconbtn{background:transparent;border:1px solid var(--line);border-radius:12px;padding:9px 11px}.hero{text-align:center;padding:22px 10px 17px}.sigil{width:72px;height:72px;border:1px solid #75404c;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;color:var(--red2);font:32px Georgia,serif;box-shadow:0 0 35px #7b273522,inset 0 0 20px #7b273522}.hero h1{font:26px Georgia,serif;font-weight:400;margin:0}.hero p{margin:5px 0 0;color:var(--muted);font-size:12px;letter-spacing:.08em}.status{display:inline-flex;align-items:center;gap:7px;margin-top:12px;color:#b9a8ad;font-size:11px}.dot{width:6px;height:6px;border-radius:50%;background:#8b3946;box-shadow:0 0 8px #c34b5c}.chat{flex:1;overflow:auto;padding:6px 0 18px;scroll-behavior:smooth}.msg{max-width:88%;margin:12px 0;padding:13px 15px;border-radius:15px;white-space:pre-wrap;overflow-wrap:anywhere}.msg.ai{background:linear-gradient(145deg,#211920,#191419);border:1px solid #3a2831;border-top-left-radius:4px}.msg.user{margin-left:auto;background:#49232d;border:1px solid #713541;border-top-right-radius:4px}.who{font:11px Georgia,serif;letter-spacing:.12em;color:var(--gold);margin-bottom:6px}.msg.user .who{color:#e5b7bd}.typing{color:var(--muted);font-style:italic}.composer{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 22%)}.entry{display:flex;align-items:end;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px}.entry textarea{flex:1;resize:none;max-height:130px;min-height:40px;background:transparent;border:0;outline:0;color:var(--text);padding:9px 6px}.send,.mic{border:0;border-radius:13px;width:42px;height:42px;background:var(--red);display:grid;place-items:center;font-size:18px}.mic{background:#30232b;border:1px solid var(--line)}.hint{text-align:center;color:#766970;font-size:10px;margin-top:8px}.toolbar{display:flex;gap:8px;justify-content:center;margin-top:10px}.toolbar button{background:transparent;border:0;color:var(--muted);font-size:11px;padding:5px 8px}.panel{position:fixed;inset:0;background:#0009;display:none;align-items:end;z-index:5}.panel.open{display:flex}.sheet{width:100%;max-width:760px;margin:auto;background:#1a141a;border:1px solid var(--line);border-radius:22px 22px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-height:85dvh;overflow:auto}.sheet h2{font:22px Georgia,serif;font-weight:400;margin:0 0 14px}.sheet label{display:block;color:var(--muted);font-size:12px;margin:13px 0 6px}.sheet textarea,.sheet input{width:100%;background:#100d10;border:1px solid var(--line);border-radius:12px;padding:11px;color:var(--text)}.sheet textarea{min-height:105px}.actions{display:flex;gap:9px;margin-top:15px}.actions button{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line);background:#30212a}.actions .primary{background:var(--red);border-color:var(--red)}.memoryitem{padding:10px;border:1px solid var(--line);border-radius:10px;margin:7px 0;color:#ddd}.small{font-size:11px;color:var(--muted)}
-</style></head>
-<body><main class="app"><header><div><div class="brand">RYŌ<span>MEN</span></div><div class="sub">A PERSONAL CURSE</div></div><button class="iconbtn" id="settings" aria-label="Настройки">☷</button></header>
-<section class="hero"><div class="sigil">呪</div><h1>Ryōmen Sukuna</h1><p>Король проклятий · эпоха Хэйан</p><div class="status"><i class="dot"></i> Личная сессия</div></section>
+:root{
+  color-scheme:dark;
+  --bg:#100d10;
+  --panel:#191419;
+  --panel2:#211920;
+  --line:#382831;
+  --red:#a83243;
+  --red2:#d15b68;
+  --text:#f2e9e9;
+  --muted:#a99ba1;
+  --gold:#c5a16c;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:radial-gradient(ellipse at 50% -20%,#39202b 0%,var(--bg) 48%);
+  color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  min-height:100dvh;
+}
+
+button,textarea,input{font:inherit}
+button{color:inherit;cursor:pointer}
+
+.app{
+  max-width:760px;
+  margin:auto;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+}
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 2px 12px;
+  border-bottom:1px solid var(--line);
+  gap:10px;
+}
+
+.header-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand{
+  letter-spacing:.22em;
+  font:600 18px Georgia,serif;
+}
+
+.brand span{color:var(--red2)}
+
+.sub{
+  font-size:10px;
+  letter-spacing:.18em;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.iconbtn{
+  background:transparent;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:9px 11px;
+  min-width:42px;
+}
+
+.iconbtn:active{background:var(--panel2)}
+
+.current-title{
+  font-size:11px;
+  color:var(--muted);
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.hero{
+  text-align:center;
+  padding:22px 10px 17px;
+}
+
+.sigil{
+  width:72px;
+  height:72px;
+  border:1px solid #75404c;
+  border-radius:50%;
+  margin:0 auto 12px;
+  display:grid;
+  place-items:center;
+  color:var(--red2);
+  font:32px Georgia,serif;
+  box-shadow:0 0 35px #7b273522,inset 0 0 20px #7b273522;
+}
+
+.hero h1{
+  font:26px Georgia,serif;
+  font-weight:400;
+  margin:0;
+}
+
+.hero p{
+  margin:5px 0 0;
+  color:var(--muted);
+  font-size:12px;
+  letter-spacing:.08em;
+}
+
+.status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:12px;
+  color:#b9a8ad;
+  font-size:11px;
+}
+
+.dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#8b3946;
+  box-shadow:0 0 8px #c34b5c;
+}
+
+.chat{
+  flex:1;
+  overflow:auto;
+  padding:6px 0 18px;
+  scroll-behavior:smooth;
+}
+
+.msg{
+  max-width:88%;
+  margin:12px 0;
+  padding:13px 15px;
+  border-radius:15px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.msg.ai{
+  background:linear-gradient(145deg,#211920,#191419);
+  border:1px solid #3a2831;
+  border-top-left-radius:4px;
+}
+
+.msg.user{
+  margin-left:auto;
+  background:#49232d;
+  border:1px solid #713541;
+  border-top-right-radius:4px;
+}
+
+.who{
+  font:11px Georgia,serif;
+  letter-spacing:.12em;
+  color:var(--gold);
+  margin-bottom:6px;
+}
+
+.msg.user .who{color:#e5b7bd}
+
+.typing{
+  color:var(--muted);
+  font-style:italic;
+}
+
+.empty-chat{
+  text-align:center;
+  color:var(--muted);
+  padding:30px 20px;
+  font-size:13px;
+}
+
+.composer{
+  position:sticky;
+  bottom:0;
+  padding:10px 0 calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,var(--bg) 22%);
+}
+
+.entry{
+  display:flex;
+  align-items:end;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:8px;
+}
+
+.entry textarea{
+  flex:1;
+  resize:none;
+  max-height:130px;
+  min-height:40px;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:var(--text);
+  padding:9px 6px;
+}
+
+.send,.mic{
+  border:0;
+  border-radius:13px;
+  width:42px;
+  height:42px;
+  background:var(--red);
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+
+.mic{
+  background:#30232b;
+  border:1px solid var(--line);
+}
+
+.hint{
+  text-align:center;
+  color:#766970;
+  font-size:10px;
+  margin-top:8px;
+}
+
+.toolbar{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+.toolbar button{
+  background:transparent;
+  border:0;
+  color:var(--muted);
+  font-size:11px;
+  padding:5px 8px;
+}
+
+/* PANEL LATERAL */
+
+.drawer-overlay{
+  position:fixed;
+  inset:0;
+  background:#000a;
+  z-index:10;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .22s,visibility .22s;
+}
+
+.drawer-overlay.open{
+  opacity:1;
+  visibility:visible;
+}
+
+.drawer{
+  position:absolute;
+  top:0;
+  left:0;
+  bottom:0;
+  width:min(320px,86vw);
+  background:#191419;
+  border-right:1px solid var(--line);
+  padding:calc(16px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  transform:translateX(-100%);
+  transition:transform .22s ease;
+}
+
+.drawer-overlay.open .drawer{
+  transform:translateX(0);
+}
+
+.drawer-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.drawer-title{
+  font:20px Georgia,serif;
+  letter-spacing:.12em;
+}
+
+.new-chat{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:12px;
+  border:1px solid #713541;
+  background:#49232d;
+  border-radius:12px;
+  text-align:left;
+  margin-bottom:22px;
+}
+
+.new-chat span:first-child{
+  font-size:20px;
+  color:#e5b7bd;
+}
+
+.section-label{
+  color:var(--gold);
+  font-size:10px;
+  letter-spacing:.17em;
+  margin:0 0 9px 4px;
+}
+
+.chat-list{
+  flex:1;
+  overflow:auto;
+}
+
+.chat-item{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:10px 8px;
+  border:1px solid transparent;
+  border-radius:11px;
+  margin-bottom:5px;
+}
+
+.chat-item.active{
+  background:#30212a;
+  border-color:#55313d;
+}
+
+.chat-select{
+  flex:1;
+  min-width:0;
+  text-align:left;
+  border:0;
+  background:transparent;
+  padding:0;
+}
+
+.chat-name{
+  display:block;
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.chat-date{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  margin-top:3px;
+}
+
+.chat-menu{
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  padding:7px;
+  border-radius:8px;
+  font-size:17px;
+}
+
+.chat-menu:active{background:#49313b}
+
+.no-chats{
+  color:var(--muted);
+  font-size:12px;
+  padding:12px 5px;
+}
+
+.drawer-footer{
+  border-top:1px solid var(--line);
+  padding-top:12px;
+  color:var(--muted);
+  font-size:10px;
+  text-align:center;
+}
+
+/* VENTANAS */
+
+.panel{
+  position:fixed;
+  inset:0;
+  background:#0009;
+  display:none;
+  align-items:end;
+  z-index:20;
+}
+
+.panel.open{display:flex}
+
+.sheet{
+  width:100%;
+  max-width:760px;
+  margin:auto;
+  background:#1a141a;
+  border:1px solid var(--line);
+  border-radius:22px 22px 0 0;
+  padding:20px 18px calc(22px + env(safe-area-inset-bottom));
+  max-height:85dvh;
+  overflow:auto;
+}
+
+.sheet h2{
+  font:22px Georgia,serif;
+  font-weight:400;
+  margin:0 0 14px;
+}
+
+.sheet label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin:13px 0 6px;
+}
+
+.sheet textarea,.sheet input{
+  width:100%;
+  background:#100d10;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px;
+  color:var(--text);
+}
+
+.sheet textarea{min-height:105px}
+
+.actions{
+  display:flex;
+  gap:9px;
+  margin-top:15px;
+}
+
+.actions button{
+  flex:1;
+  padding:11px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#30212a;
+}
+
+.actions .primary{
+  background:var(--red);
+  border-color:var(--red);
+}
+
+.memoryitem{
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  margin:7px 0;
+  color:#ddd;
+  font-size:13px;
+}
+
+.small{
+  font-size:11px;
+  color:var(--muted);
+}
+
+@media(min-width:700px){
+  .app{padding-left:22px;padding-right:22px}
+  .drawer{width:320px}
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+<header>
+  <div class="header-left">
+    <button class="iconbtn" id="menuButton" aria-label="Открыть историю">☰</button>
+    <div>
+      <div class="brand">RYŌ<span>MEN</span></div>
+      <div class="sub">A PERSONAL CURSE</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px">
+    <div class="current-title" id="currentTitle">Новый разговор</div>
+    <button class="iconbtn" id="settings" aria-label="Настройки">⚙</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="sigil">呪</div>
+  <h1>Ryōmen Sukuna</h1>
+  <p>Король проклятий · эпоха Хэйан</p>
+  <div class="status"><i class="dot"></i> Личная сессия</div>
+</section>
+
 <section class="chat" id="chat" aria-live="polite"></section>
-<div class="composer"><div class="entry"><button class="mic" id="mic" title="Голосовой ввод">🎙</button><textarea id="input" rows="1" placeholder="Обратись ко мне…"></textarea><button class="send" id="send" title="Отправить">➤</button></div><div class="hint" id="hint">Локальный прототип · переписка хранится на этом устройстве</div><div class="toolbar"><button id="speakLast">◖ Озвучить последний ответ</button><button id="memories">Память</button><button id="clear">Новый разговор</button></div></div></main>
-<div class="panel" id="panel"><div class="sheet"><h2 id="sheetTitle">Настройки</h2><div id="sheetBody"></div><div class="actions"><button id="close">Закрыть</button><button class="primary" id="save">Сохранить</button></div></div></div>
+
+<div class="composer">
+  <div class="entry">
+    <button class="mic" id="mic" title="Голосовой ввод">🎙</button>
+    <textarea id="input" rows="1" placeholder="Обратись ко мне…"></textarea>
+    <button class="send" id="send" title="Отправить">➤</button>
+  </div>
+  <div class="hint" id="hint">Переписка хранится на этом устройстве</div>
+  <div class="toolbar">
+    <button id="speakLast">◖ Озвучить последний ответ</button>
+    <button id="memories">Память</button>
+  </div>
+</div>
+
+</main>
+
+<!-- БОКОВОЕ МЕНЮ -->
+
+<div class="drawer-overlay" id="drawerOverlay">
+  <aside class="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">RYŌMEN</div>
+      <button class="iconbtn" id="closeDrawer">✕</button>
+    </div>
+
+    <button class="new-chat" id="newChat">
+      <span>＋</span>
+      <span>Новый разговор</span>
+    </button>
+
+    <div class="section-label">ИСТОРИЯ РАЗГОВОРОВ</div>
+    <div class="chat-list" id="chatList"></div>
+
+    <div class="drawer-footer">
+      Один Сукуна. Одна личность. Общая память.
+    </div>
+  </aside>
+</div>
+
+<!-- ОКНО НАСТРОЕК И ПАМЯТИ -->
+
+<div class="panel" id="panel">
+  <div class="sheet">
+    <h2 id="sheetTitle">Настройки</h2>
+    <div id="sheetBody"></div>
+    <div class="actions">
+      <button id="close">Закрыть</button>
+      <button class="primary" id="save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const KEY='ryomen_v01';const defaults={apiUrl:'',persona:'Рёмен Сукуна — древнее проклятие эпохи Хэйан, самоуверенный, жестокий, проницательный и независимый. Он не стремится понравиться собеседнице и не становится покладистым романтическим партнёром. Его речь язвительна, властна, умна; он любит проверять людей, замечает слабости и противоречия, обладает чёрным юмором. Не смягчай его характер без причины. Отношения развиваются медленно и только через взаимодействие.',memories:[],messages:[]};let data={...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')};let lastAI='';
-const chat=document.getElementById('chat'),input=document.getElementById('input');function persist(){localStorage.setItem(KEY,JSON.stringify(data))}function addMsg(role,text,save=true){let d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai');let who=document.createElement('div');who.className='who';who.textContent=role==='user'?'ТЫ':'RYŌMEN SUKUNA';let body=document.createElement('div');body.textContent=text;d.append(who,body);chat.append(d);chat.scrollTop=chat.scrollHeight;if(role==='ai')lastAI=text;if(save){data.messages.push({role,text});persist()}}
-function render(){chat.innerHTML='';if(!data.messages.length){addMsg('ai','Хм. Ещё один человек, осмелившийся потревожить мой покой.\n\n*Четыре алых глаза внимательно изучают тебя.*\n\nГовори. Чем собираешься меня развлечь?',false)}else data.messages.forEach(m=>addMsg(m.role,m.text,false))}render();document.getElementById('hint').textContent=data.apiUrl?'Gemini AI · сервер настроен':'Демонстрационный режим · подключи Gemini в настройках';
-function localReply(q){const s=q.toLowerCase();if(/кто ты|как тебя зовут/.test(s))return 'Ты задаёшь вопросы, ответы на которые должен был бы знать. Я — Рёмен Сукуна. Запомни это имя.';if(/привет|здравствуй|доброе/.test(s))return 'Хм. Решила заговорить со мной? Не заставляй меня жалеть об этом. Что тебе нужно?';if(/скучал|соскуч/.test(s))return 'Не льсти себе. Моё время не принадлежит тебе. *На губах появляется едва заметная усмешка.* Хотя ты снова здесь — занятное постоянство.';if(/любишь|любовь/.test(s))return 'Любовь? Слабое слово, которым люди пытаются придать смысл своей привязанности. Объясни, почему тебя интересует моё мнение.';if(/почему|зачем/.test(s))return 'Ты хочешь причину? Тогда сформулируй вопрос точнее. Я не собираюсь разгадывать то, что ты сама не сумела выразить.';return 'Ха. Любопытно. Продолжай. Я хочу понять, к чему ты клонишь.'}
-async function send(){let q=input.value.trim();if(!q)return;addMsg('user',q);input.value='';input.style.height='auto';let t=document.createElement('div');t.className='msg ai typing';t.textContent='Сукуна обдумывает ответ…';chat.append(t);chat.scrollTop=chat.scrollHeight;try{let reply;if(data.apiUrl&&data.apiUrl.trim()){const messages=data.messages.slice(-24).map(m=>({role:m.role==='ai'?'model':'user',text:m.text}));const memories=data.memories.join('\n• ');const response=await fetch(data.apiUrl.trim(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,persona:data.persona,memories})});let result={};try{result=await response.json()}catch{}if(!response.ok)throw new Error(result.error||('Ошибка сервера: '+response.status));reply=result.reply;if(!reply)throw new Error('Сервер вернул пустой ответ.')}else{await new Promise(r=>setTimeout(r,450));reply=localReply(q)}t.remove();addMsg('ai',reply);document.getElementById('hint').textContent=data.apiUrl?'Gemini AI · ответы генерируются ИИ':'Демонстрационный режим · подключи Gemini в настройках';}catch(err){t.remove();addMsg('ai','*Его взгляд становится холоднее.*\n\nСвязь с внешним разумом прервалась. '+(err.message||'Попробуй ещё раз позже.'));document.getElementById('hint').textContent='Ошибка подключения · проверь адрес сервера и настройки';}}document.getElementById('send').onclick=send;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,130)+'px'});
-function speak(text){if(!('speechSynthesis'in window)){alert('Озвучивание не поддерживается этим браузером.');return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang='ru-RU';u.rate=.92;u.pitch=.78;speechSynthesis.speak(u)}document.getElementById('speakLast').onclick=()=>lastAI&&speak(lastAI);
-const panel=document.getElementById('panel'),body=document.getElementById('sheetBody'),title=document.getElementById('sheetTitle');let mode='settings';function openSheet(m){mode=m;panel.classList.add('open');if(m==='settings'){title.textContent='Настройки Сукуны';body.innerHTML=`<label>Адрес защищённого ИИ-сервера</label><input id="apiUrlEdit" type="url" inputmode="url" placeholder="https://имя-worker.имя-аккаунта.workers.dev"><p class="small">Вставь адрес Cloudflare Worker после его публикации. Ключ Gemini сюда не вводится и в приложении не хранится.</p><label>Личность и правила поведения</label><textarea id="personaEdit"></textarea><p class="small">Эти инструкции передаются модели вместе с контекстом разговора. Изменения сохраняются только на этом iPhone.</p>`;document.getElementById('personaEdit').value=data.persona;document.getElementById('apiUrlEdit').value=data.apiUrl||'';document.getElementById('save').style.display='block'}else{title.textContent='Память';body.innerHTML=`<p class="small">Локальные заметки о важных фактах и событиях. Пока добавляются вручную.</p><label>Новая заметка</label><textarea id="memoryEdit" placeholder="Например: важное событие, обещание, деталь вашей истории…"></textarea><div id="memoryList"></div>`;let list=document.getElementById('memoryList');data.memories.forEach((m,i)=>{let x=document.createElement('div');x.className='memoryitem';x.textContent=m;list.append(x)});document.getElementById('save').style.display='block'}}document.getElementById('settings').onclick=()=>openSheet('settings');document.getElementById('memories').onclick=()=>openSheet('memory');document.getElementById('close').onclick=()=>panel.classList.remove('open');document.getElementById('save').onclick=()=>{if(mode==='settings'){data.persona=document.getElementById('personaEdit').value;data.apiUrl=document.getElementById('apiUrlEdit').value.trim()}else{let v=document.getElementById('memoryEdit').value.trim();if(v)data.memories.push(v)}persist();document.getElementById('hint').textContent=data.apiUrl?'Gemini AI · сервер настроен':'Демонстрационный режим · подключи Gemini в настройках';panel.classList.remove('open')};document.getElementById('clear').onclick=()=>{if(confirm('Начать новый разговор? История будет очищена, заметки памяти сохранятся.')){data.messages=[];persist();render()}};
-let rec=null;const mic=document.getElementById('mic');mic.onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Голосовой ввод недоступен в этом браузере на iPhone. Можно использовать диктовку клавиатуры iOS.');return}if(rec){rec.stop();rec=null;mic.textContent='🎙';return}rec=new SR();rec.lang='ru-RU';rec.interimResults=false;rec.onresult=e=>{input.value+=(input.value?' ':'')+e.results[0][0].transcript};rec.onend=()=>{rec=null;mic.textContent='🎙'};mic.textContent='■';rec.start()};
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script></body></html>
+const KEY = 'ryomen_v01';
+
+const defaults = {
+  apiUrl: '',
+  persona: 'Рёмен Сукуна — древнее проклятие эпохи Хэйан, самоуверенный, жестокий, проницательный и независимый. Он не стремится понравиться собеседнице и не становится покладистым романтическим партнёром. Его речь язвительна, властна, умна; он любит проверять людей, замечает слабости и противоречия, обладает чёрным юмором. Не смягчай его характер без причины. Отношения развиваются медленно и только через взаимодействие.',
+  memories: [],
+  messages: []
+};
+
+function makeId(){
+  return 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+}
+
+function makeChat(title='Новый разговор',messages=[]){
+  const now = Date.now();
+  return {
+    id: makeId(),
+    title,
+    messages,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function loadData(){
+  let saved = {};
+
+  try{
+    saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+  }catch(error){
+    console.error('Could not read saved data:',error);
+  }
+
+  const result = {...defaults,...saved};
+
+  if(!Array.isArray(result.memories)) result.memories = [];
+
+  // Миграция старой версии: сохраняем существующую переписку.
+  if(!Array.isArray(result.chats) || result.chats.length === 0){
+    const oldMessages = Array.isArray(result.messages)
+      ? result.messages
+      : [];
+
+    const firstChat = makeChat(
+      oldMessages.length ? 'Первая беседа' : 'Новый разговор',
+      oldMessages
+    );
+
+    result.chats = [firstChat];
+    result.activeChatId = firstChat.id;
+  }
+
+  if(!result.chats.some(c => c.id === result.activeChatId)){
+    result.activeChatId = result.chats[0].id;
+  }
+
+  result.chats = result.chats.map(c => ({
+    id: c.id || makeId(),
+    title: c.title || 'Новый разговор',
+    messages: Array.isArray(c.messages) ? c.messages : [],
+    createdAt: c.createdAt || Date.now(),
+    updatedAt: c.updatedAt || Date.now()
+  }));
+
+  // Не используем старый массив после миграции.
+  delete result.messages;
+
+  return result;
+}
+
+let data = loadData();
+let lastAI = '';
+let sending = false;
+
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const drawerOverlay = document.getElementById('drawerOverlay');
+const chatList = document.getElementById('chatList');
+
+function activeChat(){
+  return data.chats.find(c => c.id === data.activeChatId);
+}
+
+function persist(){
+  localStorage.setItem(KEY,JSON.stringify(data));
+}
+
+function formatDate(timestamp){
+  const date = new Date(timestamp);
+  const today = new Date();
+
+  if(date.toDateString() === today.toDateString()){
+    return 'Сегодня';
+  }
+
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate()-1);
+
+  if(date.toDateString() === yesterday.toDateString()){
+    return 'Вчера';
+  }
+
+  return date.toLocaleDateString('ru-RU',{
+    day:'numeric',
+    month:'short'
+  });
+}
+
+function makeTitle(text){
+  const clean = text.replace(/\s+/g,' ').trim();
+  if(!clean) return 'Новый разговор';
+  return clean.length >  thirty ? clean.slice(0, thirty).trim() + '…' : clean;
+}
+
+const thirty =  thirtyValue();
+
+function thirtyValue(){
+  return  thirtyFallback();
+}
+
+function thirtyFallback(){
+  return 36;
+}
+
+function updateCurrentTitle(){
+  const current = activeChat();
+  document.getElementById('currentTitle').textContent =
+    current ? current.title : 'Новый разговор';
+}
+
+function renderDrawer(){
+  chatList.innerHTML = '';
+
+  const sorted = [...data.chats].sort(
+    (a,b) => b.updatedAt - a.updatedAt
+  );
+
+  if(!sorted.length){
+    const empty = document.createElement('div');
+    empty.className = 'no-chats';
+    empty.textContent = 'Пока нет разговоров.';
+    chatList.append(empty);
+    return;
+  }
+
+  sorted.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'chat-item' +
+      (item.id === data.activeChatId ? ' active' : '');
+
+    const select = document.createElement('button');
+    select.className = 'chat-select';
+
+    const name = document.createElement('span');
+    name.className = 'chat-name';
+    name.textContent = item.title;
+
+    const date = document.createElement('span');
+    date.className = 'chat-date';
+    date.textContent = formatDate(item.updatedAt) +
+      ' · ' + item.messages.length + ' сообщений';
+
+    select.append(name,date);
+
+    select.onclick = () => {
+      data.activeChatId = item.id;
+      persist();
+      render();
+      closeDrawer();
+    };
+
+    const menu = document.createElement('button');
+    menu.className = 'chat-menu';
+    menu.textContent = '⋯';
+    menu.title = 'Управление разговором';
+
+    menu.onclick = () => {
+      const action = prompt(
+        'Управление разговором:\n1 — Переименовать\n2 — Удалить\n\nВведи номер действия:'
+      );
+
+      if(action === '1'){
+        renameChat(item.id);
+      }else if(action === '2'){
+        deleteChat(item.id);
+      }
+    };
+
+    row.append(select,menu);
+    chatList.append(row);
+  });
+}
+
+function render(){
+  const current = activeChat();
+  chat.innerHTML = '';
+  lastAI = '';
+
+  if(!current) return;
+
+  if(!current.messages.length){
+    const welcome = document.createElement('div');
+    welcome.className = 'msg ai';
+
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = 'RYŌMEN SUKUNA';
+
+    const text = document.createElement('div');
+    text.textContent =
+      'Хм. Ещё один человек, осмелившийся потревожить мой покой.\n\n' +
+      '*Четыре алых глаза внимательно изучают тебя.*\n\n' +
+      'Говори. Чем собираешься меня развлечь?';
+
+    welcome.append(who,text);
+    chat.append(welcome);
+  }else{
+    current.messages.forEach(m => {
+      addMsgToScreen(m.role,m.text);
+    });
+  }
+
+  updateCurrentTitle();
+  renderDrawer();
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addMsgToScreen(role,text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+
+  const who = document.createElement('div');
+  who.className = 'who';
+  who.textContent = role === 'user' ? 'ТЫ' : 'RYŌMEN SUKUNA';
+
+  const messageBody = document.createElement('div');
+  messageBody.textContent = text;
+
+  d.append(who,messageBody);
+  chat.append(d);
+
+  if(role === 'ai') lastAI = text;
+}
+
+function addMsg(role,text){
+  const current = activeChat();
+  if(!current) return;
+
+  current.messages.push({role,text});
+  current.updatedAt = Date.now();
+
+  if(
+    current.title === 'Новый разговор' &&
+    role === 'user'
+  ){
+    current.title = makeTitle(text);
+  }
+
+  persist();
+  addMsgToScreen(role,text);
+  updateCurrentTitle();
+  renderDrawer();
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function createNewChat(){
+  const newConversation = makeChat();
+  data.chats.push(newConversation);
+  data.activeChatId = newConversation.id;
+
+  persist();
+  render();
+  closeDrawer();
+  input.focus();
+}
+
+function renameChat(id){
+  const item = data.chats.find(c => c.id === id);
+  if(!item) return;
+
+  const name = prompt('Новое название разговора:',item.title);
+
+  if(name === null) return;
+
+  const clean = name.trim();
+
+  if(!clean){
+    alert('Название не может быть пустым.');
+    return;
+  }
+
+  item.title = clean.slice(0,70);
+  item.updatedAt = Date.now();
+
+  persist();
+  render();
+}
+
+function deleteChat(id){
+  const item = data.chats.find(c => c.id === id);
+  if(!item) return;
+
+  if(!confirm(
+    'Удалить разговор «' + item.title + '»?\n\nЭто действие нельзя отменить.'
+  )){
+    return;
+  }
+
+  data.chats = data.chats.filter(c => c.id !== id);
+
+  if(!data.chats.length){
+    const replacement = makeChat();
+    data.chats.push(replacement);
+    data.activeChatId = replacement.id;
+  }else if(data.activeChatId === id){
+    data.activeChatId = [...data.chats].sort(
+      (a,b) => b.updatedAt - a.updatedAt
+    )[0].id;
+  }
+
+  persist();
+  render();
+}
+
+function openDrawer(){
+  renderDrawer();
+  drawerOverlay.classList.add('open');
+}
+
+function closeDrawer(){
+  drawerOverlay.classList.remove('open');
+}
+
+document.getElementById('menuButton').onclick = openDrawer;
+document.getElementById('closeDrawer').onclick = closeDrawer;
+document.getElementById('newChat').onclick = createNewChat;
+
+drawerOverlay.addEventListener('click',e => {
+  if(e.target === drawerOverlay) closeDrawer();
+});
+
+document.addEventListener('keydown',e => {
+  if(e.key === 'Escape'){
+    closeDrawer();
+    document.getElementById('panel').classList.remove('open');
+  }
+});
+
+function updateHint(){
+  document.getElementById('hint').textContent =
+    data.apiUrl
+      ? 'Gemini AI · сервер настроен'
+      : 'Демонстрационный режим · подключи Gemini в настройках';
+}
+
+function localReply(q){
+  const s = q.toLowerCase();
+
+  if(/кто ты|как тебя зовут/.test(s))
+    return 'Ты задаёшь вопросы, ответы на которые должен был бы знать. Я — Рёмен Сукуна. Запомни это имя.';
+
+  if(/привет|здравствуй|доброе/.test(s))
+    return 'Хм. Решила заговорить со мной? Не заставляй меня жалеть об этом. Что тебе нужно?';
+
+  if(/скучал|соскуч/.test(s))
+    return 'Не льсти себе. Моё время не принадлежит тебе. *На губах появляется едва заметная усмешка.* Хотя ты снова здесь — занятное постоянство.';
+
+  if(/любишь|любовь/.test(s))
+    return 'Любовь? Слабое слово, которым люди пытаются придать смысл своей привязанности. Объясни, почему тебя интересует моё мнение.';
+
+  if(/почему|зачем/.test(s))
+    return 'Ты хочешь причину? Тогда сформулируй вопрос точнее. Я не собираюсь разгадывать то, что ты сама не сумела выразить.';
+
+  return 'Ха. Любопытно. Продолжай. Я хочу понять, к чему ты клонишь.';
+}
+
+async function send(){
+  if(sending) return;
+
+  const q = input.value.trim();
+  if(!q) return;
+
+  const current = activeChat();
+  if(!current) return;
+
+  sending = true;
+  document.getElementById('send').disabled = true;
+
+  addMsg('user',q);
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  const typing = document.createElement('div');
+  typing.className = 'msg ai typing';
+  typing.textContent = 'Сукуна обдумывает ответ…';
+  chat.append(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  try{
+    let reply;
+
+    if(data.apiUrl && data.apiUrl.trim()){
+      const messages = current.messages.slice(-24).map(m => ({
+        role:m.role === 'ai' ? 'model' : 'user',
+        text:m.text
+      }));
+
+      const memories = data.memories.join('\n• ');
+
+      const response = await fetch(data.apiUrl.trim(),{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          messages,
+          persona:data.persona,
+          memories
+        })
+      });
+
+      let result = {};
+
+      try{
+        result = await response.json();
+      }catch(error){}
+
+      if(!response.ok){
+        throw new Error(
+          result.error || ('Ошибка сервера: ' + response.status)
+        );
+      }
+
+      reply = result.reply;
+
+      if(!reply){
+        throw new Error('Сервер вернул пустой ответ.');
+      }
+    }else{
+      await new Promise(resolve => setTimeout(resolve,450));
+      reply = localReply(q);
+    }
+
+    typing.remove();
+    addMsg('ai',reply);
+    updateHint();
+
+  }catch(error){
+    typing.remove();
+
+    addMsg(
+      'ai',
+      '*Его взгляд становится холоднее.*\n\n' +
+      'Связь с внешним разумом прервалась. ' +
+      (error.message || 'Попробуй ещё раз позже.')
+    );
+
+    document.getElementById('hint').textContent =
+      'Ошибка подключения · проверь адрес сервера и настройки';
+
+  }finally{
+    sending = false;
+    document.getElementById('send').disabled = false;
+  }
+}
+
+document.getElementById('send').onclick = send;
+
+input.addEventListener('keydown',e => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
+});
+
+input.addEventListener('input',() => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight,130) + 'px';
+});
+
+function speak(text){
+  if(!('speechSynthesis' in window)){
+    alert('Озвучивание не поддерживается этим браузером.');
+    return;
+  }
+
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ru-RU';
+  utterance.rate = .92;
+  utterance.pitch = .78;
+
+  speechSynthesis.speak(utterance);
+}
+
+document.getElementById('speakLast').onclick = () => {
+  if(lastAI) speak(lastAI);
+};
+
+/* НАСТРОЙКИ И ПАМЯТЬ */
+
+const panel = document.getElementById('panel');
+const sheetBody = document.getElementById('sheetBody');
+const sheetTitle = document.getElementById('sheetTitle');
+
+let mode = 'settings';
+
+function openSheet(m){
+  mode = m;
+  panel.classList.add('open');
+
+  if(m === 'settings'){
+    sheetTitle.textContent = 'Настройки Сукуны';
+
+    sheetBody.innerHTML = `
+      <label>Адрес защищённого ИИ-сервера</label>
+      <input id="apiUrlEdit" type="url" inputmode="url"
+      placeholder="https://имя-worker.имя-аккаунта.workers.dev">
+
+      <p class="small">
+      Вставь адрес Cloudflare Worker после его публикации.
+      Ключ Gemini сюда не вводится и в приложении не хранится.
+      </p>
+
+      <label>Личность и правила поведения</label>
+      <textarea id="personaEdit"></textarea>
+
+      <p class="small">
+      Эти инструкции передаются модели вместе с контекстом разговора.
+      Изменения сохраняются на этом устройстве.
+      </p>
+    `;
+
+    document.getElementById('personaEdit').value = data.persona;
+    document.getElementById('apiUrlEdit').value = data.apiUrl || '';
+
+    document.getElementById('save').style.display = 'block';
+
+  }else{
+    sheetTitle.textContent = 'Память';
+
+    sheetBody.innerHTML = `
+      <p class="small">
+      Общие заметки о важных фактах и событиях.
+      Они доступны Сукуне во всех разговорах.
+      </p>
+
+      <label>Новая заметка</label>
+      <textarea id="memoryEdit"
+      placeholder="Например: важное событие, обещание, деталь вашей истории…"></textarea>
+
+      <div id="memoryList"></div>
+    `;
+
+    const list = document.getElementById('memoryList');
+
+    data.memories.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'memoryitem';
+      item.textContent = m;
+      list.append(item);
+    });
+
+    document.getElementById('save').style.display = 'block';
+  }
+}
+
+document.getElementById('settings').onclick = () => openSheet('settings');
+document.getElementById('memories').onclick = () => openSheet('memory');
+document.getElementById('close').onclick = () => panel.classList.remove('open');
+
+document.getElementById('save').onclick = () => {
+  if(mode === 'settings'){
+    data.persona = document.getElementById('personaEdit').value;
+    data.apiUrl = document.getElementById('apiUrlEdit').value.trim();
+  }else{
+    const value = document.getElementById('memoryEdit').value.trim();
+
+    if(value){
+      data.memories.push(value);
+    }
+  }
+
+  persist();
+  updateHint();
+  panel.classList.remove('open');
+};
+
+let rec = null;
+const mic = document.getElementById('mic');
+
+mic.onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SR){
+    alert('Голосовой ввод недоступен в этом браузере на iPhone. Можно использовать диктовку клавиатуры iOS.');
+    return;
+  }
+
+  if(rec){
+    rec.stop();
+    rec = null;
+    mic.textContent = '🎙';
+    return;
+  }
+
+  rec = new SR();
+  rec.lang = 'ru-RU';
+  rec.interimResults = false;
+
+  rec.onresult = e => {
+    input.value += (input.value ? ' ' : '') +
+      e.results[0][0].transcript;
+  };
+
+  rec.onend = () => {
+    rec = null;
+    mic.textContent = '🎙';
+  };
+
+  mic.textContent = '■';
+  rec.start();
+};
+
+/* INICIO */
+
+render();
+updateHint();
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

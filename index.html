@@ -34,6 +34,8 @@ body{
   color:var(--text);
   font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   min-height:100dvh;
+  height:100dvh;
+  overflow:hidden;
 }
 
 button,textarea,input{font:inherit}
@@ -42,9 +44,11 @@ button{color:inherit;cursor:pointer}
 .app{
   max-width:760px;
   margin:auto;
-  min-height:100dvh;
+  height:100dvh;
+  min-height:0;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
   padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
 }
 
@@ -55,6 +59,9 @@ header{
   padding:14px 2px 12px;
   border-bottom:1px solid var(--line);
   gap:10px;
+  flex-shrink:0;
+  background:var(--bg);
+  z-index:2;
 }
 
 .header-left{
@@ -98,12 +105,13 @@ header{
 
 .hero{
   text-align:center;
-  padding:22px 10px 17px;
+  padding:14px 10px 10px;
+  flex-shrink:0;
 }
 
 .sigil{
-  width:72px;
-  height:72px;
+  width:58px;
+  height:58px;
   border:1px solid #75404c;
   border-radius:50%;
   margin:0 auto 12px;
@@ -115,7 +123,7 @@ header{
 }
 
 .hero h1{
-  font:26px Georgia,serif;
+  font:23px Georgia,serif;
   font-weight:400;
   margin:0;
 }
@@ -136,6 +144,63 @@ header{
   font-size:11px;
 }
 
+.service-card{
+  flex-shrink:0;
+  margin:0 0 7px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#191419dd;
+  font-size:11px;
+}
+.service-top,.service-reset{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.service-name{font-weight:600;letter-spacing:.04em}
+.service-state{color:var(--muted);text-align:right}
+.service-detail{color:var(--muted);margin-top:5px;line-height:1.4}
+.service-reset{border-top:1px solid var(--line);margin-top:8px;padding-top:7px}
+.service-reset strong{color:var(--gold);font-variant-numeric:tabular-nums}
+#rateResetRow[hidden]{display:none}
+.service-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
+.service-foot a{color:#d5a3ac;text-decoration:none}
+.service-foot small{color:#81737a}
+.service-card[data-state="ok"] .service-state{color:#8bc6a0}
+.service-card[data-state="busy"] .service-state,
+.service-card[data-state="quota"] .service-state{color:#e4b56e}
+.service-card[data-state="offline"] .service-state,
+.service-card[data-state="auth"] .service-state{color:#e27d86}
+.retry-btn{
+  border:1px solid #713541;
+  background:#49232d;
+  border-radius:9px;
+  padding:5px 9px;
+  color:var(--text);
+  font-size:11px;
+}
+.retry-btn[hidden]{display:none}
+.retry-btn:disabled{opacity:.5}
+.message-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  margin-top:8px;
+  opacity:.82;
+}
+.message-actions button{
+  border:1px solid #4a3540;
+  background:#241b22;
+  color:#b9a8ad;
+  border-radius:7px;
+  padding:3px 7px;
+  font-size:10px;
+}
+.msg.user .message-actions{justify-content:flex-start}
+
+
 .dot{
   width:6px;
   height:6px;
@@ -146,9 +211,12 @@ header{
 
 .chat{
   flex:1;
-  overflow:auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
   padding:6px 0 18px;
   scroll-behavior:smooth;
+  overscroll-behavior:contain;
 }
 
 .msg{
@@ -195,10 +263,12 @@ header{
 }
 
 .composer{
-  position:sticky;
-  bottom:0;
+  position:relative;
+  flex-shrink:0;
+  bottom:auto;
   padding:10px 0 calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(transparent,var(--bg) 22%);
+  z-index:2;
 }
 
 .entry{
@@ -519,6 +589,30 @@ header{
   <div class="status"><i class="dot"></i> Личная сессия</div>
 </section>
 
+<section class="service-card" id="serviceCard" data-state="idle" aria-live="polite">
+  <div class="service-top">
+    <span class="service-name">GEMINI 3.8 FLASH</span>
+    <span class="service-state" id="serviceState">Ожидает запроса</span>
+  </div>
+  <div class="service-detail" id="serviceDetail">Статус обновится после твоего запроса. Автоматических проверок и повторов нет.</div>
+  <div class="service-reset">
+    <span>До обновления дневного лимита</span>
+    <strong id="resetCountdown">Рассчитываем…</strong>
+  </div>
+  <div class="service-reset" id="rateResetRow" hidden>
+    <span id="rateResetLabel">До окончания краткосрочного ограничения</span>
+    <strong id="rateResetCountdown">—</strong>
+  </div>
+  <div class="service-foot">
+    <small id="resetDate">00:00 по тихоокеанскому времени</small>
+    <a href="https://aistudio.google.com/usage?tab=rate-limit" target="_blank" rel="noopener">Лимиты Google ↗</a>
+  </div>
+  <div class="service-foot">
+    <small>Остаток квоты не предоставляется приложению в реальном времени.</small>
+    <button class="retry-btn" id="retryButton" hidden>Повторить</button>
+  </div>
+</section>
+
 <section class="chat" id="chat" aria-live="polite"></section>
 
 <div class="composer">
@@ -632,7 +726,10 @@ function loadData(){
   result.chats = result.chats.map(c => ({
     id: c.id || makeId(),
     title: c.title || 'Новый разговор',
-    messages: Array.isArray(c.messages) ? c.messages : [],
+    messages: (Array.isArray(c.messages) ? c.messages : []).filter(m => {
+      if (!m || m.role !== 'ai' || typeof m.text !== 'string') return true;
+      return !m.text.includes('Связь с внешним разумом прервалась.');
+    }),
     createdAt: c.createdAt || Date.now(),
     updatedAt: c.updatedAt || Date.now()
   }));
@@ -684,17 +781,7 @@ function formatDate(timestamp){
 function makeTitle(text){
   const clean = text.replace(/\s+/g,' ').trim();
   if(!clean) return 'Новый разговор';
-  return clean.length >  thirty ? clean.slice(0, thirty).trim() + '…' : clean;
-}
-
-const thirty =  thirtyValue();
-
-function thirtyValue(){
-  return  thirtyFallback();
-}
-
-function thirtyFallback(){
-  return 36;
+  return clean.length > 36 ? clean.slice(0,36).trim() + '…' : clean;
 }
 
 function updateCurrentTitle(){
@@ -790,17 +877,20 @@ function render(){
     welcome.append(who,text);
     chat.append(welcome);
   }else{
-    current.messages.forEach(m => {
-      addMsgToScreen(m.role,m.text);
+    current.messages.forEach((m,index) => {
+      addMsgToScreen(m.role,m.text,index);
     });
   }
 
   updateCurrentTitle();
   renderDrawer();
+  if(typeof retryButton !== 'undefined'){
+    retryButton.hidden = !(failedRequestAvailable && current.id === failedRequestChatId);
+  }
   chat.scrollTop = chat.scrollHeight;
 }
 
-function addMsgToScreen(role,text){
+function addMsgToScreen(role,text,index=null){
   const d = document.createElement('div');
   d.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
 
@@ -812,9 +902,62 @@ function addMsgToScreen(role,text){
   messageBody.textContent = text;
 
   d.append(who,messageBody);
+
+  if(index !== null){
+    const actions = document.createElement('div');
+    actions.className = 'message-actions';
+
+    if(role === 'user'){
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.textContent = 'Изменить';
+      edit.onclick = () => editMessage(index);
+      actions.append(edit);
+    }
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = 'Удалить';
+    remove.onclick = () => deleteMessage(index);
+    actions.append(remove);
+    d.append(actions);
+  }
+
   chat.append(d);
 
   if(role === 'ai') lastAI = text;
+}
+
+function editMessage(index){
+  const current = activeChat();
+  const message = current?.messages[index];
+  if(!message || message.role !== 'user') return;
+
+  const updated = prompt('Измени своё сообщение:',message.text);
+  if(updated === null) return;
+
+  const clean = updated.trim();
+  if(!clean){
+    alert('Сообщение не может быть пустым.');
+    return;
+  }
+
+  message.text = clean;
+  current.updatedAt = Date.now();
+  persist();
+  render();
+}
+
+function deleteMessage(index){
+  const current = activeChat();
+  if(!current || !current.messages[index]) return;
+
+  if(!confirm('Удалить это сообщение?')) return;
+
+  current.messages.splice(index,1);
+  current.updatedAt = Date.now();
+  persist();
+  render();
 }
 
 function addMsg(role,text){
@@ -832,7 +975,7 @@ function addMsg(role,text){
   }
 
   persist();
-  addMsgToScreen(role,text);
+  addMsgToScreen(role,text,current.messages.length - 1);
   updateCurrentTitle();
   renderDrawer();
   chat.scrollTop = chat.scrollHeight;
@@ -924,9 +1067,330 @@ document.addEventListener('keydown',e => {
 function updateHint(){
   document.getElementById('hint').textContent =
     data.apiUrl
-      ? 'Gemini AI · сервер настроен'
+      ? 'Gemini 3.8 Flash · запросы отправляются только по твоему действию'
       : 'Демонстрационный режим · подключи Gemini в настройках';
 }
+
+const serviceCard = document.getElementById('serviceCard');
+const serviceState = document.getElementById('serviceState');
+const serviceDetail = document.getElementById('serviceDetail');
+const retryButton = document.getElementById('retryButton');
+
+function setServiceState(state,title,detail,canRetry=false){
+  serviceCard.dataset.state = state;
+  serviceState.textContent = title;
+  serviceDetail.textContent = detail;
+  retryButton.hidden = !canRetry;
+}
+
+function getPacificParts(date){
+  const parts = new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Los_Angeles',
+    year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map(p => [p.type,p.value]));
+}
+
+function zonedMidnightToUtc(year,month,day,zone){
+  let guess = Date.UTC(year,month-1,day,0,0,0);
+  const fmt = new Intl.DateTimeFormat('en-US',{
+    timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
+  });
+
+  for(let i=0;i<4;i++){
+    const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map(p => [p.type,p.value]));
+    const representedAsUtc = Date.UTC(
+      Number(parts.year),Number(parts.month)-1,Number(parts.day),
+      Number(parts.hour),Number(parts.minute),Number(parts.second)
+    );
+    guess += Date.UTC(year,month-1,day,0,0,0) - representedAsUtc;
+  }
+  return new Date(guess);
+}
+
+function getNextPacificReset(now=new Date()){
+  const p = getPacificParts(now);
+  const nextDate = new Date(Date.UTC(
+    Number(p.year),Number(p.month)-1,Number(p.day)+1
+  ));
+  return zonedMidnightToUtc(
+    nextDate.getUTCFullYear(),
+    nextDate.getUTCMonth()+1,
+    nextDate.getUTCDate(),
+    'America/Los_Angeles'
+  );
+}
+
+let rateResetAt = null;
+let rateWaitElapsed = false;
+
+function updateResetCountdown(){
+  const now = new Date();
+  const reset = getNextPacificReset(now);
+  let seconds = Math.max(0,Math.floor((reset-now)/1000));
+
+  const hours = Math.floor(seconds/3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds/60);
+  seconds %= 60;
+
+  document.getElementById('resetCountdown').textContent =
+    String(hours).padStart(2,'0') + ':' +
+    String(minutes).padStart(2,'0') + ':' +
+    String(seconds).padStart(2,'0');
+
+  document.getElementById('resetDate').textContent =
+    'Следующий сброс: ' + reset.toLocaleString('ru-RU',{
+      timeZone:'America/Los_Angeles',
+      day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',
+      timeZoneName:'short'
+    }) + ' · Pacific Time';
+
+  const rateRow = document.getElementById('rateResetRow');
+  if(rateResetAt !== null){
+    const remaining = Math.max(0,Math.ceil((rateResetAt-Date.now())/1000));
+    if(remaining === 0){
+      rateResetAt = null;
+      rateWaitElapsed = true;
+    }else{
+      rateWaitElapsed = false;
+      document.getElementById('rateResetCountdown').textContent =
+        String(Math.floor(remaining/60)).padStart(2,'0') + ':' +
+        String(remaining%60).padStart(2,'0');
+    }
+  }
+
+  if(rateWaitElapsed){
+    document.getElementById('rateResetCountdown').textContent = 'Пауза завершилась';
+    rateRow.hidden = false;
+  }else{
+    rateRow.hidden = rateResetAt === null;
+  }
+}
+
+function getRetryDelayMs(message){
+  const match = String(message || '').match(
+    /retry in\s+([\d.]+)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h)/i
+  );
+  if(!match) return null;
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const multiplier = unit.startsWith('h') ? 3600000 :
+    (unit.startsWith('m') ? 60000 : 1000);
+
+  return Number.isFinite(amount) && amount > 0
+    ? Math.ceil(amount * multiplier)
+    : null;
+}
+
+updateResetCountdown();
+setInterval(updateResetCountdown,1000);
+
+function classifyServiceError(error){
+  const status = Number(error.providerStatus || error.status || 0);
+  const message = String(error.message || '').toLowerCase();
+
+  if(status === 429){
+    if(/per.?day|daily|requests per day|per day|rpd|quota.*day/.test(message)){
+      return {
+        state:'quota',
+        title:'Лимит дневных запросов',
+        detail:'Google сообщил об ограничении дневной квоты. Следующее время её планового обновления показано ниже. Проверь Usage в AI Studio для подтверждения.'
+      };
+    }
+    if(/per.?minute|requests per minute|tokens per minute|rpm|tpm/.test(message)){
+      return {
+        state:'quota',
+        title:'Краткосрочный лимит',
+        detail:'Google ограничил частоту запросов или токенов. Подожди указанное Google время и повтори вручную.'
+      };
+    }
+    return {
+      state:'quota',
+      title:'Ограничение Google (429)',
+      detail:'Google отклонил запрос из-за ограничения квоты. Проверь подробности в AI Studio; дневной сброс не обязательно устранит минутный лимит.'
+    };
+  }
+
+  if(status === 503 || /high demand|overloaded|temporarily unavailable/.test(message)){
+    return {
+      state:'busy',
+      title:'Gemini перегружен (503)',
+      detail:'Это перегрузка серверов Google, а не доказательство исчерпания дневной квоты. Автоматических повторов не будет.'
+    };
+  }
+
+  if(status === 401 || status === 403){
+    return {
+      state:'auth',
+      title:'Ошибка доступа',
+      detail:'Google отклонил доступ. Нужно проверить API Key, проект или разрешения сервера.'
+    };
+  }
+
+  if(status === 400){
+    return {
+      state:'auth',
+      title:'Запрос отклонён (400)',
+      detail:'Google не принял формат или содержимое запроса. Повторять тот же запрос без исправления не стоит.'
+    };
+  }
+
+  return {
+    state:'offline',
+    title:'Проблема соединения',
+    detail:'Не удалось завершить запрос к серверу. Проверь подключение и адрес Worker; автоматических повторов не будет.'
+  };
+}
+
+let failedRequestAvailable = false;
+let failedRequestChatId = null;
+
+async function requestSukunaReply(){
+  if(sending) return;
+
+  const current = activeChat();
+  if(!current) return;
+
+  const lastMessage = current.messages[current.messages.length-1];
+  if(!lastMessage || lastMessage.role !== 'user'){
+    setServiceState('idle','Нет запроса для повтора','Отправь новое сообщение, чтобы начать разговор.');
+    return;
+  }
+
+  sending = true;
+  document.getElementById('send').disabled = true;
+  retryButton.disabled = true;
+
+  const typing = document.createElement('div');
+  typing.className = 'msg ai typing';
+  typing.textContent = 'Сукуна обдумывает ответ…';
+  chat.append(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  try{
+    let reply;
+
+    if(data.apiUrl && data.apiUrl.trim()){
+      const messages = current.messages.slice(-24).map(m => ({
+        role:m.role === 'ai' ? 'model' : 'user',
+        text:m.text
+      }));
+
+      const memories = data.memories.join('\n• ');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(),90000);
+      let response;
+
+      try{
+        response = await fetch(data.apiUrl.trim(),{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            messages,
+            persona:data.persona,
+            memories
+          }),
+          signal:controller.signal
+        });
+      }finally{
+        clearTimeout(timeoutId);
+      }
+
+      let result = {};
+      try{
+        result = await response.json();
+      }catch(error){}
+
+      if(!response.ok){
+        const failure = new Error(result.error || ('Ошибка сервера: ' + response.status));
+        failure.providerStatus = result.providerStatus || response.status;
+        throw failure;
+      }
+
+      reply = result.reply;
+      if(!reply) throw new Error('Сервер вернул пустой ответ.');
+    }else{
+      await new Promise(resolve => setTimeout(resolve,450));
+      reply = localReply(lastMessage.text);
+    }
+
+    typing.remove();
+    addMsg('ai',reply);
+    failedRequestAvailable = false;
+    failedRequestChatId = null;
+    setServiceState('ok','Ответ получен','Последний запрос завершился успешно. Никаких фоновых запросов не выполняется.');
+    updateHint();
+  }catch(error){
+    typing.remove();
+    failedRequestAvailable = true;
+    failedRequestChatId = current.id;
+
+    const statusInfo = classifyServiceError(error);
+    const retryDelay = getRetryDelayMs(error.message);
+    if(Number(error.providerStatus || error.status) === 429 && retryDelay){
+      rateResetAt = Date.now() + retryDelay;
+      rateWaitElapsed = false;
+      document.getElementById('rateResetLabel').textContent =
+        'Ожидание по подсказке Google';
+      document.getElementById('rateResetRow').hidden = false;
+    }else{
+      rateResetAt = null;
+      rateWaitElapsed = false;
+      document.getElementById('rateResetRow').hidden = true;
+    }
+    setServiceState(
+      statusInfo.state,
+      statusInfo.title,
+      statusInfo.detail + ' Текст ошибки: ' + (error.message || 'неизвестная ошибка'),
+      true
+    );
+
+    document.getElementById('hint').textContent =
+      'Ответ не получен. Твоё сообщение сохранено; можно повторить вручную.';
+  }finally{
+    sending = false;
+    document.getElementById('send').disabled = false;
+    retryButton.disabled = false;
+  }
+}
+
+async function send(){
+  if(sending) return;
+
+  const q = input.value.trim();
+  if(!q) return;
+
+  const current = activeChat();
+  if(!current) return;
+
+  addMsg('user',q);
+  input.value = '';
+  input.style.height = 'auto';
+  failedRequestAvailable = false;
+  failedRequestChatId = current.id;
+  rateResetAt = null;
+  rateWaitElapsed = false;
+  document.getElementById('rateResetRow').hidden = true;
+  retryButton.hidden = true;
+  setServiceState('idle','Запрос отправлен','Ожидаем ответ от Gemini. Повторных запросов в фоне не будет.');
+
+  await requestSukunaReply();
+}
+
+retryButton.onclick = () => {
+  if(!failedRequestAvailable || sending) return;
+  if(activeChat()?.id !== failedRequestChatId){
+    alert('Открой разговор, в котором не был получен ответ.');
+    return;
+  }
+  rateResetAt = null;
+  rateWaitElapsed = false;
+  document.getElementById('rateResetRow').hidden = true;
+  requestSukunaReply();
+};
 
 function localReply(q){
   const s = q.toLowerCase();
@@ -949,94 +1413,6 @@ function localReply(q){
   return 'Ха. Любопытно. Продолжай. Я хочу понять, к чему ты клонишь.';
 }
 
-async function send(){
-  if(sending) return;
-
-  const q = input.value.trim();
-  if(!q) return;
-
-  const current = activeChat();
-  if(!current) return;
-
-  sending = true;
-  document.getElementById('send').disabled = true;
-
-  addMsg('user',q);
-
-  input.value = '';
-  input.style.height = 'auto';
-
-  const typing = document.createElement('div');
-  typing.className = 'msg ai typing';
-  typing.textContent = 'Сукуна обдумывает ответ…';
-  chat.append(typing);
-  chat.scrollTop = chat.scrollHeight;
-
-  try{
-    let reply;
-
-    if(data.apiUrl && data.apiUrl.trim()){
-      const messages = current.messages.slice(-24).map(m => ({
-        role:m.role === 'ai' ? 'model' : 'user',
-        text:m.text
-      }));
-
-      const memories = data.memories.join('\n• ');
-
-      const response = await fetch(data.apiUrl.trim(),{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          messages,
-          persona:data.persona,
-          memories
-        })
-      });
-
-      let result = {};
-
-      try{
-        result = await response.json();
-      }catch(error){}
-
-      if(!response.ok){
-        throw new Error(
-          result.error || ('Ошибка сервера: ' + response.status)
-        );
-      }
-
-      reply = result.reply;
-
-      if(!reply){
-        throw new Error('Сервер вернул пустой ответ.');
-      }
-    }else{
-      await new Promise(resolve => setTimeout(resolve,450));
-      reply = localReply(q);
-    }
-
-    typing.remove();
-    addMsg('ai',reply);
-    updateHint();
-
-  }catch(error){
-    typing.remove();
-
-    addMsg(
-      'ai',
-      '*Его взгляд становится холоднее.*\n\n' +
-      'Связь с внешним разумом прервалась. ' +
-      (error.message || 'Попробуй ещё раз позже.')
-    );
-
-    document.getElementById('hint').textContent =
-      'Ошибка подключения · проверь адрес сервера и настройки';
-
-  }finally{
-    sending = false;
-    document.getElementById('send').disabled = false;
-  }
-}
 
 document.getElementById('send').onclick = send;
 

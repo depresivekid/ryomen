@@ -10,47 +10,99 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; background: #0b0709; color: #eadfe0;
     font-family: -apple-system, system-ui, "Segoe UI", sans-serif; }
+  button { font-family: inherit; }
   #app { display: flex; flex-direction: column; height: 100dvh;
     padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-  header { display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+
+  header { display: flex; align-items: center; gap: 10px; padding: 10px 12px;
     border-bottom: 1px solid #3a1519; background: #120a0c; }
-  .avatar { width: 44px; height: 44px; border-radius: 10px; background: #3a0d12;
-    display: flex; align-items: center; justify-content: center; font-size: 20px; color: #ff6b6b; }
-  .titulo { flex: 1; }
-  .titulo b { font-size: 18px; display: block; }
-  .titulo span { font-size: 12px; color: #8d7a7c; }
+  .icono { background: none; border: 1px solid #3a1519; color: #e8c9cc; border-radius: 10px;
+    width: 42px; height: 42px; font-size: 20px; flex: none; }
+  .avatar { width: 42px; height: 42px; border-radius: 10px; background: #3a0d12; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 19px; color: #ff6b6b; }
+  .titulo { flex: 1; min-width: 0; }
+  .titulo b { font-size: 17px; display: block; }
+  .titulo span { font-size: 12px; color: #8d7a7c; display: block;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .online { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
     background: #d63a3a; margin-right: 5px; }
-  #borrar { background: none; border: 1px solid #3a1519; color: #c9a3a6;
-    border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+
   #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .vacio { margin: auto; text-align: center; color: #6f5d5f; font-size: 15px; line-height: 1.5; }
   .msg { max-width: 88%; padding: 12px 14px; border-radius: 14px; line-height: 1.5;
     font-size: 16px; white-space: pre-wrap; word-wrap: break-word; }
   .msg.model { align-self: flex-start; background: #1a0f11; border: 1px solid #3a1519; }
   .msg.user { align-self: flex-end; background: #5c1219; }
+  .msg.sel { outline: 2px solid #ff6b6b; }
   .msg em { color: #ff7b7b; font-style: normal; font-weight: 600; }
-  #escribiendo { display: none; align-self: flex-start; color: #ff7b7b; font-size: 14px; padding: 4px 6px; }
+  .acciones { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.12); }
+  .acciones button { background: rgba(0,0,0,.35); color: #eadfe0; border: 1px solid #5a2a30;
+    border-radius: 9px; padding: 7px 11px; font-size: 13px; }
+
+  #escribiendo { display: none; align-self: flex-start; color: #ff7b7b; font-size: 14px; padding: 0 20px 8px; }
   #escribiendo.on { display: block; }
   #escribiendo::after { content: ""; animation: puntos 1.2s infinite; }
   @keyframes puntos { 0%{content:""} 33%{content:"."} 66%{content:".."} 100%{content:"..."} }
   #error { display: none; margin: 0 16px 8px; padding: 10px 12px; border-radius: 10px;
     background: #3a0d12; border: 1px solid #8a2630; color: #ffb4b4; font-size: 14px; }
   #error.on { display: block; }
+
   form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #3a1519; background: #120a0c; }
-  textarea { flex: 1; resize: none; max-height: 140px; background: #1a0f11; color: #eadfe0;
+  #input { flex: 1; resize: none; max-height: 140px; background: #1a0f11; color: #eadfe0;
     border: 1px solid #3a1519; border-radius: 14px; padding: 11px 14px; font-size: 16px;
     font-family: inherit; outline: none; }
   #enviar { background: #8a1c25; color: white; border: none; border-radius: 14px;
     padding: 0 18px; font-size: 16px; font-weight: 600; }
   #enviar:disabled { opacity: .45; }
+
+  /* Menú lateral */
+  #velo { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; z-index: 10; }
+  #panel { position: fixed; top: 0; bottom: 0; left: 0; width: 84%; max-width: 340px; z-index: 11;
+    background: #120a0c; border-right: 1px solid #3a1519; transform: translateX(-100%);
+    transition: transform .25s; display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  body.menu #panel { transform: none; }
+  body.menu #velo { display: block; }
+  .panel-top { display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid #3a1519; font-size: 18px; font-weight: 600; }
+  .panel-top button { background: none; border: none; color: #c9a3a6; font-size: 24px; }
+  .grande { margin: 12px 14px 4px; padding: 13px; background: #8a1c25; color: #fff; border: none;
+    border-radius: 12px; font-size: 16px; font-weight: 600; }
+  .secundario { margin: 8px 14px; padding: 12px; background: #1a0f11; color: #e8c9cc;
+    border: 1px solid #3a1519; border-radius: 12px; font-size: 15px; text-align: left; }
+  #lista { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .conv { display: flex; align-items: center; gap: 6px; background: #1a0f11;
+    border: 1px solid #3a1519; border-radius: 12px; padding: 4px 4px 4px 12px; }
+  .conv.act { border-color: #ff6b6b; background: #2a1215; }
+  .conv .nombre { flex: 1; min-width: 0; padding: 10px 0; font-size: 15px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv button { background: none; border: none; font-size: 17px; padding: 9px; color: #c9a3a6; }
+  .etiqueta { margin: 10px 16px 0; font-size: 12px; color: #8d7a7c; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Ventana para editar texto */
+  #modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; z-index: 20;
+    align-items: center; justify-content: center; padding: 20px; }
+  #modal.on { display: flex; }
+  .caja { width: 100%; max-width: 420px; background: #160c0e; border: 1px solid #5a2a30;
+    border-radius: 16px; padding: 16px; }
+  .caja h3 { margin: 0 0 10px; font-size: 17px; }
+  .caja .ayuda { font-size: 13px; color: #8d7a7c; margin: -4px 0 10px; line-height: 1.4; }
+  .caja textarea { width: 100%; background: #1a0f11; color: #eadfe0; border: 1px solid #3a1519;
+    border-radius: 12px; padding: 11px 12px; font-size: 16px; font-family: inherit; outline: none; resize: vertical; }
+  .botones { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+  .botones button { padding: 10px 16px; border-radius: 10px; font-size: 15px; border: 1px solid #3a1519;
+    background: #1a0f11; color: #eadfe0; }
+  .botones .ok { background: #8a1c25; border-color: #8a1c25; color: #fff; font-weight: 600; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
+    <button class="icono" id="btnMenu" type="button" aria-label="Menú">☰</button>
     <div class="avatar">宿</div>
-    <div class="titulo"><b>宿儺 · RYŌMEN</b><span><i class="online"></i>Online</span></div>
-    <button id="borrar" type="button">Borrar chat</button>
+    <div class="titulo"><b>宿儺 · RYŌMEN</b><span><i class="online"></i><span id="subtitulo" style="display:inline"></span></span></div>
+    <button class="icono" id="btnNueva" type="button" aria-label="Nueva conversación">＋</button>
   </header>
   <div id="chat"></div>
   <div id="escribiendo">Сукуна думает</div>
@@ -59,6 +111,27 @@
     <textarea id="input" rows="1" placeholder="Напиши ему…"></textarea>
     <button id="enviar" type="submit">➤</button>
   </form>
+</div>
+
+<div id="velo"></div>
+<div id="panel">
+  <div class="panel-top"><span>Conversaciones</span><button id="cerrarMenu" type="button">✕</button></div>
+  <button class="grande" id="nuevaGrande" type="button">＋ Nueva conversación</button>
+  <div id="lista"></div>
+  <div class="etiqueta">Sukuna</div>
+  <button class="secundario" id="btnMemoria" type="button">🧠 Memoria compartida</button>
+</div>
+
+<div id="modal">
+  <div class="caja">
+    <h3 id="modalTitulo"></h3>
+    <div class="ayuda" id="modalAyuda"></div>
+    <textarea id="modalInput" rows="5"></textarea>
+    <div class="botones">
+      <button id="modalNo" type="button">Cancelar</button>
+      <button id="modalOk" class="ok" type="button">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -202,90 +275,236 @@ const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕД
 
 Не превращай каждый разговор в урок. Учи тогда, когда она просит, когда это естественно вытекает из беседы или когда ты сам решил проверить её знания.`;
 
-// ===== Código de la app (no hace falta tocarlo) =====
-const KEY = "ryomen_chat_v1";
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const boton = document.getElementById("enviar");
-const form = document.getElementById("form");
-const escribiendo = document.getElementById("escribiendo");
-const errorBox = document.getElementById("error");
-let ocupado = false;
-let mensajes = [];
-try { mensajes = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { mensajes = []; }
+// ===== Datos guardados en este teléfono =====
+const KEY = "ryomen_data_v2";
+const KEY_VIEJO = "ryomen_chat_v1";
 
-// Quita copias viejas guardadas por el service worker (causa de "no cambia nada")
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function nuevaConv(titulo, auto) {
+  return { id: uid(), titulo: titulo || "Nueva conversación", autotitulo: auto !== false, mensajes: [], creado: Date.now() };
+}
+
+function cargar() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.convs) && d.convs.length) { if (typeof d.memoria !== "string") d.memoria = ""; return d; }
+  } catch (e) {}
+  // Primera vez: rescata el chat anterior si existía
+  let viejos = [];
+  try { viejos = JSON.parse(localStorage.getItem(KEY_VIEJO)) || []; } catch (e) {}
+  const c = viejos.length ? nuevaConv("Conversación anterior", false) : nuevaConv();
+  c.mensajes = viejos.map(m => ({ id: uid(), rol: m.rol, texto: m.texto }));
+  return { convs: [c], activa: c.id, memoria: "" };
+}
+
+let datos = cargar();
+function guardar() { try { localStorage.setItem(KEY, JSON.stringify(datos)); } catch (e) {} }
+function activa() {
+  let c = datos.convs.find(x => x.id === datos.activa);
+  if (!c) { c = datos.convs[0]; datos.activa = c.id; }
+  return c;
+}
+
+// ===== Elementos =====
+const $ = id => document.getElementById(id);
+const chat = $("chat"), input = $("input"), boton = $("enviar"), form = $("form");
+const escribiendo = $("escribiendo"), errorBox = $("error"), subtitulo = $("subtitulo");
+let ocupado = false, convEnviando = null, seleccionado = null;
+
+// Quita copias viejas guardadas por el service worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
   if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
 }
 
-function guardar() { try { localStorage.setItem(KEY, JSON.stringify(mensajes)); } catch (e) {} }
-
+// ===== Utilidades =====
 function formatear(t) {
-  const limpio = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const limpio = String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return limpio.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
 }
-
-function pintar() {
-  chat.innerHTML = "";
-  mensajes.forEach(m => {
-    const d = document.createElement("div");
-    d.className = "msg " + (m.rol === "user" ? "user" : "model");
-    d.innerHTML = formatear(m.texto);
-    chat.appendChild(d);
-  });
-  chat.scrollTop = chat.scrollHeight;
-}
-
 function mostrarError(t) { errorBox.textContent = t; errorBox.classList.add("on"); }
 function quitarError() { errorBox.classList.remove("on"); }
 function ajustarAlto() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
+function refrescarIndicador() { escribiendo.classList.toggle("on", ocupado && convEnviando === datos.activa); }
 input.addEventListener("input", ajustarAlto);
 
+// ===== Ventana para editar texto =====
+let modalCb = null;
+function pedirTexto(titulo, valor, cb, ayuda, filas) {
+  $("modalTitulo").textContent = titulo;
+  $("modalAyuda").textContent = ayuda || "";
+  $("modalAyuda").style.display = ayuda ? "block" : "none";
+  $("modalInput").rows = filas || 5;
+  $("modalInput").value = valor || "";
+  modalCb = cb;
+  $("modal").classList.add("on");
+  setTimeout(() => $("modalInput").focus(), 50);
+}
+function cerrarModal() { $("modal").classList.remove("on"); modalCb = null; }
+$("modalNo").addEventListener("click", cerrarModal);
+$("modalOk").addEventListener("click", () => { const cb = modalCb, v = $("modalInput").value; cerrarModal(); if (cb) cb(v); });
+
+// ===== Pintar chat =====
+function pintar(bajar) {
+  const c = activa();
+  subtitulo.textContent = "Online · " + c.titulo;
+  chat.innerHTML = "";
+  if (!c.mensajes.length) {
+    const v = document.createElement("div");
+    v.className = "vacio";
+    v.textContent = "Aquí no hay nada todavía.\nEscríbele algo a Сукуна.";
+    v.style.whiteSpace = "pre-line";
+    chat.appendChild(v);
+  }
+  c.mensajes.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg " + (m.rol === "user" ? "user" : "model") + (m.id === seleccionado ? " sel" : "");
+    const t = document.createElement("div");
+    t.innerHTML = formatear(m.texto);
+    d.appendChild(t);
+    if (m.id === seleccionado) {
+      const a = document.createElement("div");
+      a.className = "acciones";
+      const b1 = document.createElement("button"); b1.textContent = "✎ Editar";
+      const b2 = document.createElement("button"); b2.textContent = "🗑 Borrar";
+      const b3 = document.createElement("button"); b3.textContent = "⧉ Copiar";
+      b1.addEventListener("click", e => { e.stopPropagation(); editarMensaje(m); });
+      b2.addEventListener("click", e => { e.stopPropagation(); borrarMensaje(m); });
+      b3.addEventListener("click", e => { e.stopPropagation(); copiarMensaje(m, b3); });
+      a.append(b1, b2, b3);
+      d.appendChild(a);
+    }
+    d.addEventListener("click", () => { seleccionado = (seleccionado === m.id ? null : m.id); pintar(false); });
+    chat.appendChild(d);
+  });
+  if (bajar !== false) chat.scrollTop = chat.scrollHeight;
+  refrescarIndicador();
+}
+
+function editarMensaje(m) {
+  pedirTexto("Editar mensaje", m.texto, v => {
+    if (v.trim()) { m.texto = v.trim(); guardar(); }
+    seleccionado = null; pintar(false);
+  });
+}
+function borrarMensaje(m) {
+  if (!confirm("¿Borrar este mensaje?")) return;
+  const c = activa();
+  c.mensajes = c.mensajes.filter(x => x.id !== m.id);
+  seleccionado = null; guardar(); pintar(false);
+}
+function copiarMensaje(m, btn) {
+  try { navigator.clipboard.writeText(m.texto); btn.textContent = "✓ Copiado"; }
+  catch (e) { btn.textContent = "No se pudo"; }
+}
+
+// ===== Menú lateral y conversaciones =====
+function abrirMenu() { pintarLista(); document.body.classList.add("menu"); }
+function cerrarMenu() { document.body.classList.remove("menu"); }
+$("btnMenu").addEventListener("click", abrirMenu);
+$("cerrarMenu").addEventListener("click", cerrarMenu);
+$("velo").addEventListener("click", cerrarMenu);
+
+function pintarLista() {
+  const lista = $("lista");
+  lista.innerHTML = "";
+  datos.convs.forEach(c => {
+    const fila = document.createElement("div");
+    fila.className = "conv" + (c.id === datos.activa ? " act" : "");
+    const n = document.createElement("div");
+    n.className = "nombre"; n.textContent = c.titulo;
+    n.addEventListener("click", () => { cambiarA(c.id); });
+    const r = document.createElement("button"); r.textContent = "✎"; r.setAttribute("aria-label", "Renombrar");
+    const x = document.createElement("button"); x.textContent = "🗑"; x.setAttribute("aria-label", "Borrar");
+    r.addEventListener("click", () => renombrarConv(c));
+    x.addEventListener("click", () => borrarConv(c));
+    fila.append(n, r, x);
+    lista.appendChild(fila);
+  });
+}
+
+function cambiarA(id) {
+  datos.activa = id; seleccionado = null; guardar();
+  cerrarMenu(); quitarError(); pintar(true);
+}
+function crearConv() {
+  const c = nuevaConv();
+  datos.convs.unshift(c);
+  datos.activa = c.id; seleccionado = null; guardar();
+  cerrarMenu(); quitarError(); pintar(true);
+  input.focus();
+}
+function renombrarConv(c) {
+  pedirTexto("Renombrar conversación", c.titulo, v => {
+    if (v.trim()) { c.titulo = v.trim().slice(0, 60); c.autotitulo = false; guardar(); pintarLista(); pintar(false); }
+  }, "", 2);
+}
+function borrarConv(c) {
+  if (!confirm("¿Borrar la conversación «" + c.titulo + "» y todos sus mensajes?")) return;
+  datos.convs = datos.convs.filter(x => x.id !== c.id);
+  if (!datos.convs.length) datos.convs.push(nuevaConv());
+  if (datos.activa === c.id) datos.activa = datos.convs[0].id;
+  seleccionado = null; guardar(); pintarLista(); pintar(true);
+}
+$("btnNueva").addEventListener("click", crearConv);
+$("nuevaGrande").addEventListener("click", crearConv);
+
+$("btnMemoria").addEventListener("click", () => {
+  pedirTexto("Memoria compartida", datos.memoria, v => { datos.memoria = v.trim(); guardar(); },
+    "Lo que escribas aquí lo sabrá Сукуна en TODAS las conversaciones (tu nombre, tus gustos, tu nivel de japonés, tus metas…).", 9);
+});
+
+// ===== Enviar mensaje =====
 async function enviar() {
   const texto = input.value.trim();
   if (!texto || ocupado) return;
   quitarError();
+  seleccionado = null;
 
-  ocupado = true; boton.disabled = true;
-  const historial = mensajes.slice(-30).map(m => ({
+  const conv = activa();
+  const historial = conv.mensajes.slice(-30).map(m => ({
     role: m.rol === "user" ? "user" : "model",
     parts: [{ text: m.texto }]
   }));
-  mensajes.push({ rol: "user", texto });
+  const msg = { id: uid(), rol: "user", texto };
+  conv.mensajes.push(msg);
+  if (conv.autotitulo) { conv.titulo = texto.slice(0, 32) + (texto.length > 32 ? "…" : ""); conv.autotitulo = false; }
+  guardar();
+
   input.value = ""; ajustarAlto();
-  pintar();
-  escribiendo.classList.add("on");
-  chat.scrollTop = chat.scrollHeight;
+  ocupado = true; convEnviando = conv.id; boton.disabled = true;
+  pintar(true);
+
+  let personaje = PERSONALIDAD;
+  if (datos.memoria) {
+    personaje += "\n\n11. Общая память (то, что ты знаешь о собеседнице; это общее для всех разговоров):\n" + datos.memoria;
+  }
 
   try {
     const r = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: texto, history: historial, personaje: PERSONALIDAD })
+      body: JSON.stringify({ message: texto, history: historial, personaje })
     });
     let data = {};
     try { data = await r.json(); } catch (e) {}
     if (!r.ok || data.error) throw new Error(data.error || ("El Worker respondió con código " + r.status));
-    mensajes.push({ rol: "model", texto: data.reply });
+    conv.mensajes.push({ id: uid(), rol: "model", texto: data.reply });
     guardar();
   } catch (e) {
-    mensajes.pop();           // quita tu mensaje fallido y lo devuelve a la caja
-    input.value = texto; ajustarAlto();
+    conv.mensajes = conv.mensajes.filter(x => x.id !== msg.id);
+    guardar();
+    if (datos.activa === conv.id) { input.value = texto; ajustarAlto(); }
     mostrarError("No pude hablar con Sukuna: " + e.message);
   } finally {
-    escribiendo.classList.remove("on");
-    ocupado = false; boton.disabled = false;
-    pintar();
+    ocupado = false; convEnviando = null; boton.disabled = false;
+    if (datos.activa === conv.id) pintar(true); else refrescarIndicador();
   }
 }
 
 form.addEventListener("submit", e => { e.preventDefault(); enviar(); });
-document.getElementById("borrar").addEventListener("click", () => {
-  if (confirm("¿Borrar toda la conversación?")) { mensajes = []; guardar(); pintar(); quitarError(); }
-});
-pintar();
+pintar(true);
 </script>
 </body>
 </html>

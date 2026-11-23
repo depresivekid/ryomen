@@ -15,22 +15,22 @@
 <style>
 :root{
   color-scheme:dark;
-  --bg:#100d10;
-  --panel:#191419;
-  --panel2:#211920;
-  --line:#382831;
-  --red:#a83243;
-  --red2:#d15b68;
-  --text:#f2e9e9;
+  --bg:#080708;
+  --panel:#120e11;
+  --panel2:#1a1217;
+  --line:#351923;
+  --red:#9e182b;
+  --red2:#e16b78;
+  --text:#f3eeee;
   --muted:#a99ba1;
-  --gold:#c5a16c;
+  --gold:#d4a45c;
 }
 
 *{box-sizing:border-box}
 
 body{
   margin:0;
-  background:radial-gradient(ellipse at 50% -20%,#39202b 0%,var(--bg) 48%);
+  background:var(--bg);
   color:var(--text);
   font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   min-height:100dvh;
@@ -42,25 +42,26 @@ button,textarea,input{font:inherit}
 button{color:inherit;cursor:pointer}
 
 .app{
-  max-width:760px;
-  margin:auto;
+  width:100%;
+  max-width:none;
+  margin:0;
   height:100dvh;
   min-height:0;
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+  padding:env(safe-area-inset-top) 0 0;
 }
 
 header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:14px 2px 12px;
+  padding:10px 14px 9px;
   border-bottom:1px solid var(--line);
   gap:10px;
   flex-shrink:0;
-  background:var(--bg);
+  background:#0b090a;
   z-index:2;
 }
 
@@ -71,25 +72,20 @@ header{
 }
 
 .brand{
-  letter-spacing:.22em;
-  font:600 18px Georgia,serif;
+  letter-spacing:.08em;
+  font:600 16px Georgia,serif;
 }
 
 .brand span{color:var(--red2)}
 
-.sub{
-  font-size:10px;
-  letter-spacing:.18em;
-  color:var(--muted);
-  margin-top:2px;
-}
+.sub{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.04em}
 
 .iconbtn{
-  background:transparent;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:9px 11px;
-  min-width:42px;
+  background:#100d10;
+  border:1px solid #30242a;
+  border-radius:10px;
+  padding:8px 10px;
+  min-width:38px;
 }
 
 .iconbtn:active{background:var(--panel2)}
@@ -103,11 +99,7 @@ header{
   white-space:nowrap;
 }
 
-.hero{
-  text-align:center;
-  padding:14px 10px 10px;
-  flex-shrink:0;
-}
+.hero{display:none}
 
 .sigil{
   width:58px;
@@ -144,7 +136,8 @@ header{
   font-size:11px;
 }
 
-.service-card{
+.service-card{display:none}
+.service-card-unused{
   flex-shrink:0;
   margin:0 0 7px;
   padding:10px 12px;
@@ -164,7 +157,6 @@ header{
 .service-detail{color:var(--muted);margin-top:5px;line-height:1.4}
 .service-reset{border-top:1px solid var(--line);margin-top:8px;padding-top:7px}
 .service-reset strong{color:var(--gold);font-variant-numeric:tabular-nums}
-#rateResetRow[hidden]{display:none}
 .service-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
 .service-foot a{color:#d5a3ac;text-decoration:none}
 .service-foot small{color:#81737a}
@@ -212,16 +204,17 @@ header{
 .chat{
   flex:1;
   min-height:0;
+  width:100%;
   overflow-y:auto;
   overflow-x:hidden;
-  padding:6px 0 18px;
+  padding:0 0 18px;
   scroll-behavior:smooth;
   overscroll-behavior:contain;
 }
 
 .msg{
   max-width:88%;
-  margin:12px 0;
+  margin:12px 14px;
   padding:13px 15px;
   border-radius:15px;
   white-space:pre-wrap;
@@ -229,9 +222,17 @@ header{
 }
 
 .msg.ai{
-  background:linear-gradient(145deg,#211920,#191419);
-  border:1px solid #3a2831;
-  border-top-left-radius:4px;
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:20px 22px 24px;
+  background:#100b0e;
+  border:0;
+  border-left:2px solid #4b1e2a;
+  border-bottom:1px solid #28151c;
+  border-radius:0;
+  font-size:17px;
+  line-height:1.72;
 }
 
 .msg.user{
@@ -266,8 +267,9 @@ header{
   position:relative;
   flex-shrink:0;
   bottom:auto;
-  padding:10px 0 calc(10px + env(safe-area-inset-bottom));
-  background:linear-gradient(transparent,var(--bg) 22%);
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  background:#0b090a;
+  border-top:1px solid var(--line);
   z-index:2;
 }
 
@@ -310,28 +312,37 @@ header{
   border:1px solid var(--line);
 }
 
-.hint{
-  text-align:center;
-  color:#766970;
-  font-size:10px;
-  margin-top:8px;
-}
+.hint{display:none}
 
 .toolbar{
   display:flex;
-  gap:8px;
-  justify-content:center;
-  margin-top:10px;
-  flex-wrap:wrap;
+  gap:7px;
+  justify-content:flex-start;
+  margin:0 14px;
+  padding:7px 10px;
+  border-bottom:1px solid #24151b;
+  background:#0b090a;
+  flex-shrink:0;
+  overflow-x:auto;
 }
 
 .toolbar button{
-  background:transparent;
-  border:0;
-  color:var(--muted);
+  background:#100d10;
+  border:1px solid #30242a;
+  border-radius:9px;
+  color:#c9b9bf;
   font-size:11px;
-  padding:5px 8px;
+  padding:7px 10px;
+  white-space:nowrap;
 }
+
+
+.notice{display:none;align-items:center;gap:8px;padding:6px 12px;color:#e7b6bd;background:#1a0f14;border-top:1px solid #4a202b;font-size:11px;line-height:1.35}
+.notice.show{display:flex}
+.notice-text{flex:1;min-width:0}
+.notice button{border:1px solid #69303c;background:#32151e;color:#f3dfe2;border-radius:8px;padding:5px 8px;font-size:11px;white-space:nowrap}
+.avatar{width:42px;height:42px;display:grid;place-items:center;background:#100709;border:1px solid #672333;color:#e45b6b;font:26px Georgia,serif;box-shadow:0 0 14px #8c1b302e}
+.online{font-size:10px;color:#ed8790;border:1px solid #702633;background:#291016;border-radius:99px;padding:3px 8px;white-space:nowrap}
 
 /* PANEL LATERAL */
 
@@ -557,10 +568,7 @@ header{
   color:var(--muted);
 }
 
-@media(min-width:700px){
-  .app{padding-left:22px;padding-right:22px}
-  .drawer{width:320px}
-}
+@media(min-width:700px){.drawer{width:320px}.msg.ai{padding-left:clamp(24px,6vw,90px);padding-right:clamp(24px,6vw,90px)}}
 </style>
 </head>
 
@@ -570,62 +578,37 @@ header{
 
 <header>
   <div class="header-left">
-    <button class="iconbtn" id="menuButton" aria-label="Открыть историю">☰</button>
+    <div class="avatar">呪</div>
     <div>
-      <div class="brand">RYŌ<span>MEN</span></div>
-      <div class="sub">A PERSONAL CURSE</div>
+      <div style="display:flex;align-items:center;gap:8px"><div class="brand">RYŌMEN</div><span class="online">● RYŌMEN</span></div>
+      <div class="sub">Рёмен Сукуна · 日本語 · Русский · Español</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:9px">
-    <div class="current-title" id="currentTitle">Новый разговор</div>
+  <div style="display:flex;align-items:center;gap:7px">
+    <button class="iconbtn" id="menuButton" aria-label="Открыть историю">☰</button>
     <button class="iconbtn" id="settings" aria-label="Настройки">⚙</button>
   </div>
 </header>
 
-<section class="hero">
-  <div class="sigil">呪</div>
-  <h1>Ryōmen Sukuna</h1>
-  <p>Король проклятий · эпоха Хэйан</p>
-  <div class="status"><i class="dot"></i> Личная сессия</div>
-</section>
-
-<section class="service-card" id="serviceCard" data-state="idle" aria-live="polite">
-  <div class="service-top">
-    <span class="service-name">GEMINI 3.8 FLASH</span>
-    <span class="service-state" id="serviceState">Ожидает запроса</span>
-  </div>
-  <div class="service-detail" id="serviceDetail">Статус обновится после твоего запроса. Автоматических проверок и повторов нет.</div>
-  <div class="service-reset">
-    <span>До обновления дневного лимита</span>
-    <strong id="resetCountdown">Рассчитываем…</strong>
-  </div>
-  <div class="service-reset" id="rateResetRow" hidden>
-    <span id="rateResetLabel">До окончания краткосрочного ограничения</span>
-    <strong id="rateResetCountdown">—</strong>
-  </div>
-  <div class="service-foot">
-    <small id="resetDate">00:00 по тихоокеанскому времени</small>
-    <a href="https://aistudio.google.com/usage?tab=rate-limit" target="_blank" rel="noopener">Лимиты Google ↗</a>
-  </div>
-  <div class="service-foot">
-    <small>Остаток квоты не предоставляется приложению в реальном времени.</small>
-    <button class="retry-btn" id="retryButton" hidden>Повторить</button>
-  </div>
-</section>
-
+<div class="toolbar">
+  <button id="historyShortcut">◷ История</button>
+  <button id="speakLast">◖ Озвучить ответ</button>
+  <button id="memories">✧ Память</button>
+  <button id="newChatShortcut">＋ Новый разговор</button>
+</div>
 <section class="chat" id="chat" aria-live="polite"></section>
 
+<div class="notice" id="connectionNotice" role="status" aria-live="polite">
+  <span class="notice-text" id="connectionText"></span>
+  <button id="retryButton" type="button" hidden>Reintentar</button>
+</div>
 <div class="composer">
   <div class="entry">
     <button class="mic" id="mic" title="Голосовой ввод">🎙</button>
     <textarea id="input" rows="1" placeholder="Обратись ко мне…"></textarea>
     <button class="send" id="send" title="Отправить">➤</button>
   </div>
-  <div class="hint" id="hint">Переписка хранится на этом устройстве</div>
-  <div class="toolbar">
-    <button id="speakLast">◖ Озвучить последний ответ</button>
-    <button id="memories">Память</button>
-  </div>
+  <div class="hint" id="hint"></div>
 </div>
 
 </main>
@@ -884,9 +867,7 @@ function render(){
 
   updateCurrentTitle();
   renderDrawer();
-  if(typeof retryButton !== 'undefined'){
-    retryButton.hidden = !(failedRequestAvailable && current.id === failedRequestChatId);
-  }
+  retryButton.hidden = !(failedRequestAvailable && current.id === failedRequestChatId);
   chat.scrollTop = chat.scrollHeight;
 }
 
@@ -1064,185 +1045,15 @@ document.addEventListener('keydown',e => {
   }
 });
 
-function updateHint(){
-  document.getElementById('hint').textContent =
-    data.apiUrl
-      ? 'Gemini 3.8 Flash · запросы отправляются только по твоему действию'
-      : 'Демонстрационный режим · подключи Gemini в настройках';
-}
+function updateHint(){}
 
-const serviceCard = document.getElementById('serviceCard');
-const serviceState = document.getElementById('serviceState');
-const serviceDetail = document.getElementById('serviceDetail');
+const connectionNotice = document.getElementById('connectionNotice');
+const connectionText = document.getElementById('connectionText');
 const retryButton = document.getElementById('retryButton');
-
-function setServiceState(state,title,detail,canRetry=false){
-  serviceCard.dataset.state = state;
-  serviceState.textContent = title;
-  serviceDetail.textContent = detail;
+function setNotice(message='',canRetry=false){
+  connectionText.textContent = message;
+  connectionNotice.classList.toggle('show',Boolean(message));
   retryButton.hidden = !canRetry;
-}
-
-function getPacificParts(date){
-  const parts = new Intl.DateTimeFormat('en-US',{
-    timeZone:'America/Los_Angeles',
-    year:'numeric',month:'2-digit',day:'2-digit'
-  }).formatToParts(date);
-  return Object.fromEntries(parts.map(p => [p.type,p.value]));
-}
-
-function zonedMidnightToUtc(year,month,day,zone){
-  let guess = Date.UTC(year,month-1,day,0,0,0);
-  const fmt = new Intl.DateTimeFormat('en-US',{
-    timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',
-    hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
-  });
-
-  for(let i=0;i<4;i++){
-    const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map(p => [p.type,p.value]));
-    const representedAsUtc = Date.UTC(
-      Number(parts.year),Number(parts.month)-1,Number(parts.day),
-      Number(parts.hour),Number(parts.minute),Number(parts.second)
-    );
-    guess += Date.UTC(year,month-1,day,0,0,0) - representedAsUtc;
-  }
-  return new Date(guess);
-}
-
-function getNextPacificReset(now=new Date()){
-  const p = getPacificParts(now);
-  const nextDate = new Date(Date.UTC(
-    Number(p.year),Number(p.month)-1,Number(p.day)+1
-  ));
-  return zonedMidnightToUtc(
-    nextDate.getUTCFullYear(),
-    nextDate.getUTCMonth()+1,
-    nextDate.getUTCDate(),
-    'America/Los_Angeles'
-  );
-}
-
-let rateResetAt = null;
-let rateWaitElapsed = false;
-
-function updateResetCountdown(){
-  const now = new Date();
-  const reset = getNextPacificReset(now);
-  let seconds = Math.max(0,Math.floor((reset-now)/1000));
-
-  const hours = Math.floor(seconds/3600);
-  seconds %= 3600;
-  const minutes = Math.floor(seconds/60);
-  seconds %= 60;
-
-  document.getElementById('resetCountdown').textContent =
-    String(hours).padStart(2,'0') + ':' +
-    String(minutes).padStart(2,'0') + ':' +
-    String(seconds).padStart(2,'0');
-
-  document.getElementById('resetDate').textContent =
-    'Следующий сброс: ' + reset.toLocaleString('ru-RU',{
-      timeZone:'America/Los_Angeles',
-      day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',
-      timeZoneName:'short'
-    }) + ' · Pacific Time';
-
-  const rateRow = document.getElementById('rateResetRow');
-  if(rateResetAt !== null){
-    const remaining = Math.max(0,Math.ceil((rateResetAt-Date.now())/1000));
-    if(remaining === 0){
-      rateResetAt = null;
-      rateWaitElapsed = true;
-    }else{
-      rateWaitElapsed = false;
-      document.getElementById('rateResetCountdown').textContent =
-        String(Math.floor(remaining/60)).padStart(2,'0') + ':' +
-        String(remaining%60).padStart(2,'0');
-    }
-  }
-
-  if(rateWaitElapsed){
-    document.getElementById('rateResetCountdown').textContent = 'Пауза завершилась';
-    rateRow.hidden = false;
-  }else{
-    rateRow.hidden = rateResetAt === null;
-  }
-}
-
-function getRetryDelayMs(message){
-  const match = String(message || '').match(
-    /retry in\s+([\d.]+)\s*(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h)/i
-  );
-  if(!match) return null;
-
-  const amount = Number(match[1]);
-  const unit = match[2].toLowerCase();
-  const multiplier = unit.startsWith('h') ? 3600000 :
-    (unit.startsWith('m') ? 60000 : 1000);
-
-  return Number.isFinite(amount) && amount > 0
-    ? Math.ceil(amount * multiplier)
-    : null;
-}
-
-updateResetCountdown();
-setInterval(updateResetCountdown,1000);
-
-function classifyServiceError(error){
-  const status = Number(error.providerStatus || error.status || 0);
-  const message = String(error.message || '').toLowerCase();
-
-  if(status === 429){
-    if(/per.?day|daily|requests per day|per day|rpd|quota.*day/.test(message)){
-      return {
-        state:'quota',
-        title:'Лимит дневных запросов',
-        detail:'Google сообщил об ограничении дневной квоты. Следующее время её планового обновления показано ниже. Проверь Usage в AI Studio для подтверждения.'
-      };
-    }
-    if(/per.?minute|requests per minute|tokens per minute|rpm|tpm/.test(message)){
-      return {
-        state:'quota',
-        title:'Краткосрочный лимит',
-        detail:'Google ограничил частоту запросов или токенов. Подожди указанное Google время и повтори вручную.'
-      };
-    }
-    return {
-      state:'quota',
-      title:'Ограничение Google (429)',
-      detail:'Google отклонил запрос из-за ограничения квоты. Проверь подробности в AI Studio; дневной сброс не обязательно устранит минутный лимит.'
-    };
-  }
-
-  if(status === 503 || /high demand|overloaded|temporarily unavailable/.test(message)){
-    return {
-      state:'busy',
-      title:'Gemini перегружен (503)',
-      detail:'Это перегрузка серверов Google, а не доказательство исчерпания дневной квоты. Автоматических повторов не будет.'
-    };
-  }
-
-  if(status === 401 || status === 403){
-    return {
-      state:'auth',
-      title:'Ошибка доступа',
-      detail:'Google отклонил доступ. Нужно проверить API Key, проект или разрешения сервера.'
-    };
-  }
-
-  if(status === 400){
-    return {
-      state:'auth',
-      title:'Запрос отклонён (400)',
-      detail:'Google не принял формат или содержимое запроса. Повторять тот же запрос без исправления не стоит.'
-    };
-  }
-
-  return {
-    state:'offline',
-    title:'Проблема соединения',
-    detail:'Не удалось завершить запрос к серверу. Проверь подключение и адрес Worker; автоматических повторов не будет.'
-  };
 }
 
 let failedRequestAvailable = false;
@@ -1256,7 +1067,7 @@ async function requestSukunaReply(){
 
   const lastMessage = current.messages[current.messages.length-1];
   if(!lastMessage || lastMessage.role !== 'user'){
-    setServiceState('idle','Нет запроса для повтора','Отправь новое сообщение, чтобы начать разговор.');
+    setNotice('No hay ningún mensaje pendiente para reenviar.');
     return;
   }
 
@@ -1321,35 +1132,28 @@ async function requestSukunaReply(){
     addMsg('ai',reply);
     failedRequestAvailable = false;
     failedRequestChatId = null;
-    setServiceState('ok','Ответ получен','Последний запрос завершился успешно. Никаких фоновых запросов не выполняется.');
-    updateHint();
+    setNotice('');
   }catch(error){
     typing.remove();
     failedRequestAvailable = true;
     failedRequestChatId = current.id;
 
-    const statusInfo = classifyServiceError(error);
-    const retryDelay = getRetryDelayMs(error.message);
-    if(Number(error.providerStatus || error.status) === 429 && retryDelay){
-      rateResetAt = Date.now() + retryDelay;
-      rateWaitElapsed = false;
-      document.getElementById('rateResetLabel').textContent =
-        'Ожидание по подсказке Google';
-      document.getElementById('rateResetRow').hidden = false;
-    }else{
-      rateResetAt = null;
-      rateWaitElapsed = false;
-      document.getElementById('rateResetRow').hidden = true;
+    const status = Number(error.providerStatus || error.status || 0);
+    let message = 'No se pudo conectar con el servidor. Tu mensaje quedó guardado.';
+    if(status === 429){
+      message = 'Google rechazó la solicitud por límite de uso (429). El chat no puede conocer el tiempo real restante; consulta Usage en AI Studio.';
+    }else if(status === 503){
+      message = 'Gemini está temporalmente saturado (503). Tu mensaje quedó guardado.';
+    }else if(status === 401 || status === 403){
+      message = 'El servidor rechazó el acceso (401/403). Hay que revisar la configuración del Worker.';
+    }else if(error.name === 'AbortError'){
+      message = 'El servidor tardó demasiado en responder. Tu mensaje quedó guardado.';
+    }else if(error.name === 'TypeError' || /load failed|failed to fetch/i.test(error.message || '')){
+      message = 'El navegador no pudo acceder al Worker. Comprueba la URL y los permisos CORS de los dos dominios.';
+    }else if(status){
+      message = 'El servidor devolvió un error (' + status + '). Tu mensaje quedó guardado.';
     }
-    setServiceState(
-      statusInfo.state,
-      statusInfo.title,
-      statusInfo.detail + ' Текст ошибки: ' + (error.message || 'неизвестная ошибка'),
-      true
-    );
-
-    document.getElementById('hint').textContent =
-      'Ответ не получен. Твоё сообщение сохранено; можно повторить вручную.';
+    setNotice(message,true);
   }finally{
     sending = false;
     document.getElementById('send').disabled = false;
@@ -1371,11 +1175,8 @@ async function send(){
   input.style.height = 'auto';
   failedRequestAvailable = false;
   failedRequestChatId = current.id;
-  rateResetAt = null;
-  rateWaitElapsed = false;
-  document.getElementById('rateResetRow').hidden = true;
   retryButton.hidden = true;
-  setServiceState('idle','Запрос отправлен','Ожидаем ответ от Gemini. Повторных запросов в фоне не будет.');
+  setNotice('Conectando con Sukuna…');
 
   await requestSukunaReply();
 }
@@ -1386,9 +1187,7 @@ retryButton.onclick = () => {
     alert('Открой разговор, в котором не был получен ответ.');
     return;
   }
-  rateResetAt = null;
-  rateWaitElapsed = false;
-  document.getElementById('rateResetRow').hidden = true;
+  setNotice('Reenviando el último mensaje…');
   requestSukunaReply();
 };
 
@@ -1415,6 +1214,8 @@ function localReply(q){
 
 
 document.getElementById('send').onclick = send;
+document.getElementById('historyShortcut').onclick = openDrawer;
+document.getElementById('newChatShortcut').onclick = createNewChat;
 
 input.addEventListener('keydown',e => {
   if(e.key === 'Enter' && !e.shiftKey){

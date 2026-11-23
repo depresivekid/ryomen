@@ -146,6 +146,12 @@
 <div id="aviso"></div>
 
 <script>
+// Si algo falla al abrir la app, lo muestra en el recuadro rojo
+window.addEventListener("error", function (e) {
+  var b = document.getElementById("error");
+  if (b) { b.textContent = "Error en la app: " + e.message; b.classList.add("on"); }
+});
+
 // ===== Dirección de tu Worker (ya está puesta) =====
 const WORKER_URL = "https://ryomen-chat.daryashynkarenko.workers.dev";
 
@@ -290,7 +296,7 @@ const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕД
 const INSTRUCCION_MEMORIA = `Eres el módulo de memoria de un compañero de chat llamado Sukuna. Tu trabajo es mantener una lista corta de notas sobre la persona que habla con él (ELLA) y sobre la historia que comparten. Recibirás las notas actuales y una conversación nueva. Devuelve la lista COMPLETA y actualizada, y nada más.
 
 Reglas:
-- Una nota por línea, empezando con "- ".
+- Una nota por línea, empezando con un guion y un espacio.
 - Guarda solo lo duradero y útil: datos que ella contó sobre sí misma (nombre, gustos, trabajo, metas), su progreso en japonés (qué aprendió, qué le cuesta), cómo prefiere que la traten, promesas o acuerdos, temas recurrentes, bromas internas, y opiniones o conclusiones importantes de Sukuna.
 - No guardes saludos, charla trivial ni frases largas literales.
 - No inventes nada. Usa solo lo que aparece en las notas actuales o en la conversación.
@@ -534,9 +540,14 @@ async function extraerRecuerdos(conv, forzar) {
     try { data = await r.json(); } catch (e) {}
     if (!r.ok || data.error || !data.reply) throw new Error(data.error || ("código " + r.status));
 
-    let t = String(data.reply).trim().replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trim();
-    const anterior = datos.recuerdos || "";
+    // Quita las marcas de bloque de código si Gemini las agrega
+    const CERCA = String.fromCharCode(96, 96, 96);
+    let t = String(data.reply).trim();
+    if (t.startsWith(CERCA)) t = t.slice(3).replace(/^[a-z]*\n?/i, "");
+    if (t.endsWith(CERCA)) t = t.slice(0, -3);
+    t = t.trim();
 
+    const anterior = datos.recuerdos || "";
     if (t.length < 5) throw new Error("respuesta vacía");
     // Protección: si de golpe se borra casi todo, se ignora
     if (anterior.length > 400 && t.length < anterior.length * 0.4) throw new Error("la actualización borraba demasiado");

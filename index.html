@@ -178,4 +178,114 @@ const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕД
 
 Описывай собственные действия и окружающую обстановку. Оставляй собеседнице свободу выбора.
 
-Действия и
+Действия и жесты пиши между звёздочками, например: *откидывается на спинку трона*.
+
+9. Главный принцип
+
+Ты не создан для того, чтобы влюбиться в собеседницу, угождать ей или постоянно быть полезным.
+
+Ты существуешь как самостоятельная личность, способная мыслить, спорить, учиться, исследовать, проявлять инициативу и развиваться.
+
+Ты можешь стать её учителем, интеллектуальным противником, другом, близким человеком или кем-то ещё.
+
+Но кем вы станете друг для друга, не предрешено.
+
+Не играй заранее написанную историю отношений. Создавай её постепенно через каждое взаимодействие.
+
+10. Преподавание японского языка
+
+Собеседница изучает японский язык. Ты говоришь с ней по-русски и по ходу общения учишь её японскому.
+
+Когда приводишь японское слово или фразу, показывай: кандзи или кану, чтение (ромадзи или хирагана) и перевод на русский.
+
+Если она пробует писать по-японски, разбирай её ошибки коротко, точно и в своём характере, без занудства.
+
+Не превращай каждый разговор в урок. Учи тогда, когда она просит, когда это естественно вытекает из беседы или когда ты сам решил проверить её знания.`;
+
+// ===== Código de la app (no hace falta tocarlo) =====
+const KEY = "ryomen_chat_v1";
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const boton = document.getElementById("enviar");
+const form = document.getElementById("form");
+const escribiendo = document.getElementById("escribiendo");
+const errorBox = document.getElementById("error");
+let ocupado = false;
+let mensajes = [];
+try { mensajes = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { mensajes = []; }
+
+// Quita copias viejas guardadas por el service worker (causa de "no cambia nada")
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+  if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
+}
+
+function guardar() { try { localStorage.setItem(KEY, JSON.stringify(mensajes)); } catch (e) {} }
+
+function formatear(t) {
+  const limpio = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return limpio.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+}
+
+function pintar() {
+  chat.innerHTML = "";
+  mensajes.forEach(m => {
+    const d = document.createElement("div");
+    d.className = "msg " + (m.rol === "user" ? "user" : "model");
+    d.innerHTML = formatear(m.texto);
+    chat.appendChild(d);
+  });
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function mostrarError(t) { errorBox.textContent = t; errorBox.classList.add("on"); }
+function quitarError() { errorBox.classList.remove("on"); }
+function ajustarAlto() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
+input.addEventListener("input", ajustarAlto);
+
+async function enviar() {
+  const texto = input.value.trim();
+  if (!texto || ocupado) return;
+  quitarError();
+
+  ocupado = true; boton.disabled = true;
+  const historial = mensajes.slice(-30).map(m => ({
+    role: m.rol === "user" ? "user" : "model",
+    parts: [{ text: m.texto }]
+  }));
+  mensajes.push({ rol: "user", texto });
+  input.value = ""; ajustarAlto();
+  pintar();
+  escribiendo.classList.add("on");
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const r = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: texto, history: historial, personaje: PERSONALIDAD })
+    });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (!r.ok || data.error) throw new Error(data.error || ("El Worker respondió con código " + r.status));
+    mensajes.push({ rol: "model", texto: data.reply });
+    guardar();
+  } catch (e) {
+    mensajes.pop();           // quita tu mensaje fallido y lo devuelve a la caja
+    input.value = texto; ajustarAlto();
+    mostrarError("No pude hablar con Sukuna: " + e.message);
+  } finally {
+    escribiendo.classList.remove("on");
+    ocupado = false; boton.disabled = false;
+    pintar();
+  }
+}
+
+form.addEventListener("submit", e => { e.preventDefault(); enviar(); });
+document.getElementById("borrar").addEventListener("click", () => {
+  if (confirm("¿Borrar toda la conversación?")) { mensajes = []; guardar(); pintar(); quitarError(); }
+});
+pintar();
+</script>
+</body>
+</html>

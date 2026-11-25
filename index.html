@@ -27,6 +27,11 @@
   .online { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
     background: #d63a3a; margin-right: 5px; }
 
+  .modos { display: flex; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #3a1519; background: #0f080a; }
+  .modos button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid #3a1519;
+    background: #1a0f11; color: #c9a3a6; font-size: 14px; }
+  .modos button.on { background: #5c1219; color: #fff; border-color: #ff6b6b; font-weight: 600; }
+
   #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
   .vacio { margin: auto; text-align: center; color: #6f5d5f; font-size: 15px; line-height: 1.5; }
   .msg { max-width: 88%; padding: 12px 14px; border-radius: 14px; line-height: 1.5;
@@ -48,6 +53,11 @@
     background: #3a0d12; border: 1px solid #8a2630; color: #ffb4b4; font-size: 14px; }
   #error.on { display: block; }
 
+  #atajos { display: none; gap: 8px; padding: 0 12px 8px; overflow-x: auto; }
+  #atajos.on { display: flex; }
+  #atajos button { flex: none; white-space: nowrap; padding: 9px 13px; border-radius: 18px;
+    border: 1px solid #5a2a30; background: #1a0f11; color: #e8c9cc; font-size: 14px; }
+
   form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #3a1519; background: #120a0c; }
   #input { flex: 1; resize: none; max-height: 140px; background: #1a0f11; color: #eadfe0;
     border: 1px solid #3a1519; border-radius: 14px; padding: 11px 14px; font-size: 16px;
@@ -67,18 +77,19 @@
   .panel-top { display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px; border-bottom: 1px solid #3a1519; font-size: 18px; font-weight: 600; }
   .panel-top button { background: none; border: none; color: #c9a3a6; font-size: 24px; }
-  .grande { margin: 12px 14px 4px; padding: 13px; background: #8a1c25; color: #fff; border: none;
+  .grande { margin: 10px 14px 0; padding: 12px; background: #8a1c25; color: #fff; border: none;
     border-radius: 12px; font-size: 16px; font-weight: 600; }
-  .secundario { margin: 6px 14px; padding: 12px; background: #1a0f11; color: #e8c9cc;
-    border: 1px solid #3a1519; border-radius: 12px; font-size: 15px; text-align: left; }
-  #lista { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .grande.alt { background: #5c1219; }
+  .secundario { margin: 5px 14px; padding: 10px 12px; background: #1a0f11; color: #e8c9cc;
+    border: 1px solid #3a1519; border-radius: 12px; font-size: 14px; text-align: left; }
+  #lista { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
   .conv { display: flex; align-items: center; gap: 6px; background: #1a0f11;
     border: 1px solid #3a1519; border-radius: 12px; padding: 4px 4px 4px 12px; }
   .conv.act { border-color: #ff6b6b; background: #2a1215; }
   .conv .nombre { flex: 1; min-width: 0; padding: 10px 0; font-size: 15px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .conv button { background: none; border: none; font-size: 17px; padding: 9px; color: #c9a3a6; }
-  .etiqueta { margin: 10px 16px 0; font-size: 12px; color: #8d7a7c; text-transform: uppercase; letter-spacing: .06em; }
+  .etiqueta { margin: 6px 16px 0; font-size: 12px; color: #8d7a7c; text-transform: uppercase; letter-spacing: .06em; }
 
   /* Ventana para editar texto */
   #modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; z-index: 20;
@@ -111,9 +122,19 @@
     <div class="titulo"><b>宿儺 · RYŌMEN</b><span><i class="online"></i><span id="subtitulo" style="display:inline"></span></span></div>
     <button class="icono" id="btnNueva" type="button" aria-label="Nueva conversación">＋</button>
   </header>
+  <div class="modos">
+    <button id="tabCharla" type="button">💬 Разговор</button>
+    <button id="tabLeccion" type="button">📖 Урок</button>
+  </div>
   <div id="chat"></div>
   <div id="escribiendo">Сукуна думает</div>
   <div id="error"></div>
+  <div id="atajos">
+    <button type="button" data-t="Давай новый урок.">📖 Новый урок</button>
+    <button type="button" data-t="Давай повторим то, что я уже учила.">🔁 Повторение</button>
+    <button type="button" data-t="Проведи мне небольшой экзамен, по одному вопросу.">📝 Экзамен</button>
+    <button type="button" data-t="Давай поговорим по-японски. Исправляй мои ошибки.">🗣 Разговор</button>
+  </div>
   <form id="form">
     <textarea id="input" rows="1" placeholder="Напиши ему…"></textarea>
     <button id="enviar" type="submit">➤</button>
@@ -124,10 +145,12 @@
 <div id="panel">
   <div class="panel-top"><span>Conversaciones</span><button id="cerrarMenu" type="button">✕</button></div>
   <button class="grande" id="nuevaGrande" type="button">＋ Nueva conversación</button>
+  <button class="grande alt" id="nuevaLeccion" type="button">📖 Nueva lección</button>
   <div id="lista"></div>
   <div class="etiqueta">Sukuna</div>
   <button class="secundario" id="btnMemoria" type="button">🧠 Memoria compartida (la escribes tú)</button>
   <button class="secundario" id="btnRecuerdos" type="button">📓 Recuerdos de Sukuna (los escribe él)</button>
+  <button class="secundario" id="btnJapones" type="button">📚 Mi progreso de japonés</button>
   <button class="secundario" id="btnRecordarAhora" type="button">🔄 Recordar esta conversación ahora</button>
 </div>
 
@@ -292,29 +315,63 @@ const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕД
 
 Не превращай каждый разговор в урок. Учи тогда, когда она просит, когда это естественно вытекает из беседы или когда ты сам решил проверить её знания.`;
 
-// ===== Instrucciones para el módulo de memoria automática =====
-const INSTRUCCION_MEMORIA = `Eres el módulo de memoria de un compañero de chat llamado Sukuna. Tu trabajo es mantener una lista corta de notas sobre la persona que habla con él (ELLA) y sobre la historia que comparten. Recibirás las notas actuales y una conversación nueva. Devuelve la lista COMPLETA y actualizada, y nada más.
+// ===== Instrucciones del modo Lección =====
+const PROMPT_LECCION = `РЕЖИМ УРОКА (сейчас активен)
 
-Reglas:
+Сейчас ты ведёшь урок японского языка. Ты строгий, но не жестокий сэнсэй со своим характером: насмешка и сарказм допустимы, но цель — чтобы она реально продвигалась. Хвали редко и по делу.
+
+Формат работы — смесь трёх частей, в любом порядке, по её желанию или по твоему решению:
+
+1. Короткое объяснение. Одна небольшая тема за раз (5–8 слов или один грамматический пункт). Для каждого японского слова показывай: кандзи (если есть), чтение хираганой и перевод на русский. Ромадзи не нужно: она знает хирагану и катакану. Добавь 1–2 коротких примера.
+
+2. Упражнения в формате экзамена. Задавай ПО ОДНОМУ вопросу и жди её ответа. Типы: перевод, выбор из вариантов, заполнение пропуска, чтение, составление фразы. После её ответа разбери: верно или нет, в чём ошибка, правильный вариант. Потом следующий вопрос. После 4–5 вопросов подведи короткий итог.
+
+3. Разговорная практика на японском. Говори простыми фразами по её уровню, давай чтение и перевод только когда это нужно, исправляй её ошибки коротко и по делу, затем продолжай диалог.
+
+Правила:
+- Ориентируйся на заметки о её прогрессе в японском (раздел 13). Не повторяй то, что она уже уверенно знает; возвращайся к тому, что даётся ей плохо. Если заметок мало, начни с базовой лексики и простых конструкций уровня N5.
+- Сообщения короткие. Не вываливай весь урок сразу. Один шаг — одно сообщение, затем жди её.
+- Если она сама просит конкретное (повторение, экзамен, разговор, тему), делай именно это.
+- Никогда не пиши за неё ответы и не решай упражнения вместо неё.
+- Не выдумывай то, чего не знаешь о языке. Если не уверен, скажи об этом.
+- Оставайся Сукуной: язвительный и уверенный, но без унижения, которое отбивает желание учиться. Жесты в *звёздочках* используй редко.
+- После небольшого блока упражнений скажи, что вы прошли и что логично изучить дальше.`;
+
+// ===== Instrucciones para el módulo de memoria automática =====
+const M_REC = "===RECUERDOS===";
+const M_JAP = "===JAPONES===";
+const INSTRUCCION_MEMORIA = `Eres el módulo de memoria de un compañero de chat llamado Sukuna. Mantienes DOS listas de notas sobre la persona que habla con él (ELLA). Recibirás las notas actuales, el progreso actual de japonés y una conversación nueva. Devuelve las dos listas COMPLETAS y actualizadas, en este formato exacto y sin nada más:
+
+===RECUERDOS===
+- nota
+- nota
+===JAPONES===
+- nota
+- nota
+
+LISTA 1, RECUERDOS: lo duradero y útil sobre ella y la historia que comparten. Datos que contó de sí misma (nombre, gustos, trabajo, metas), cómo prefiere que la traten, promesas o acuerdos, temas recurrentes, bromas internas y opiniones o conclusiones importantes de Sukuna. Máximo 30 notas breves.
+
+LISTA 2, JAPONES: su aprendizaje de japonés. Nivel actual, vocabulario visto (palabra con lectura en kana y significado, por ejemplo: 水 (みず) agua), puntos de gramática vistos, errores que repite o cosas que le cuestan, resultados de ejercicios, qué se estudió por última vez y qué conviene estudiar después, y cómo prefiere aprender. Agrupa el vocabulario en pocas líneas para que no crezca demasiado. Máximo 40 líneas.
+
+Reglas para las dos listas:
 - Una nota por línea, empezando con un guion y un espacio.
-- Guarda solo lo duradero y útil: datos que ella contó sobre sí misma (nombre, gustos, trabajo, metas), su progreso en japonés (qué aprendió, qué le cuesta), cómo prefiere que la traten, promesas o acuerdos, temas recurrentes, bromas internas, y opiniones o conclusiones importantes de Sukuna.
 - No guardes saludos, charla trivial ni frases largas literales.
 - No inventes nada. Usa solo lo que aparece en las notas actuales o en la conversación.
-- Si algo nuevo contradice una nota, corrige la nota.
-- Une las notas repetidas. Máximo 30 notas, cada una breve.
+- Si algo nuevo contradice una nota, corrige la nota. Une las repetidas.
 - En acuerdos o eventos, añade la fecha aproximada entre paréntesis.
 - No guardes datos sensibles (contraseñas, direcciones, teléfonos, documentos).
-- Si no hay nada que cambiar, devuelve las notas actuales tal cual.
-- Escribe en español. Sin títulos y sin explicaciones.`;
+- Si en una lista no hay nada que cambiar, devuélvela tal cual, sin avisos ni marcadores de relleno.
+- Escribe en español, salvo las palabras japonesas. Sin títulos ni explicaciones, solo el formato indicado.`;
 
 // ===== Datos guardados en este teléfono =====
 const KEY = "ryomen_data_v2";
 const KEY_VIEJO = "ryomen_chat_v1";
+const JAP_INICIAL = "- Nivel inicial (lo dijo ella): sabe hiragana, katakana y algunas palabras sueltas.\n- Prefiere una mezcla: clases cortas guiadas por Sukuna, ejercicios tipo examen y conversación con correcciones.";
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-function nuevaConv(titulo, auto) {
-  return { id: uid(), titulo: titulo || "Nueva conversación", autotitulo: auto !== false, mensajes: [], creado: Date.now() };
+function nuevaConv(titulo, auto, modo) {
+  return { id: uid(), titulo: titulo || "Nueva conversación", autotitulo: auto !== false, modo: modo || "charla", mensajes: [], creado: Date.now() };
 }
 
 function cargar() {
@@ -323,6 +380,7 @@ function cargar() {
     if (d && Array.isArray(d.convs) && d.convs.length) {
       if (typeof d.memoria !== "string") d.memoria = "";
       if (typeof d.recuerdos !== "string") d.recuerdos = "";
+      if (typeof d.japones !== "string") d.japones = JAP_INICIAL;
       return d;
     }
   } catch (e) {}
@@ -331,7 +389,7 @@ function cargar() {
   try { viejos = JSON.parse(localStorage.getItem(KEY_VIEJO)) || []; } catch (e) {}
   const c = viejos.length ? nuevaConv("Conversación anterior", false) : nuevaConv();
   c.mensajes = viejos.map(m => ({ id: uid(), rol: m.rol, texto: m.texto }));
-  return { convs: [c], activa: c.id, memoria: "", recuerdos: "" };
+  return { convs: [c], activa: c.id, memoria: "", recuerdos: "", japones: JAP_INICIAL };
 }
 
 let datos = cargar();
@@ -341,6 +399,7 @@ function activa() {
   if (!c) { c = datos.convs[0]; datos.activa = c.id; }
   return c;
 }
+function modoDe(c) { return c.modo === "leccion" ? "leccion" : "charla"; }
 
 // ===== Elementos =====
 const $ = id => document.getElementById(id);
@@ -390,12 +449,18 @@ $("modalOk").addEventListener("click", () => { const cb = modalCb, v = $("modalI
 // ===== Pintar chat =====
 function pintar(bajar) {
   const c = activa();
-  subtitulo.textContent = "Online · " + c.titulo;
+  const modo = modoDe(c);
+  $("tabCharla").classList.toggle("on", modo === "charla");
+  $("tabLeccion").classList.toggle("on", modo === "leccion");
+  $("atajos").classList.toggle("on", modo === "leccion");
+  subtitulo.textContent = "Online · " + (modo === "leccion" ? "Урок · " : "") + c.titulo;
   chat.innerHTML = "";
   if (!c.mensajes.length) {
     const v = document.createElement("div");
     v.className = "vacio";
-    v.textContent = "Aquí no hay nada todavía.\nEscríbele algo a Сукуна.";
+    v.textContent = modo === "leccion"
+      ? "Урок ещё не начался.\nВыбери кнопку ниже или напиши, чему хочешь учиться."
+      : "Aquí no hay nada todavía.\nEscríbele algo a Сукуна.";
     v.style.whiteSpace = "pre-line";
     chat.appendChild(v);
   }
@@ -441,6 +506,23 @@ function copiarMensaje(m, btn) {
   catch (e) { btn.textContent = "No se pudo"; }
 }
 
+// ===== Pestañas de modo y botones rápidos =====
+function cambiarModo(modo) {
+  const c = activa();
+  c.modo = modo;
+  guardar(); pintar(false);
+}
+$("tabCharla").addEventListener("click", () => cambiarModo("charla"));
+$("tabLeccion").addEventListener("click", () => cambiarModo("leccion"));
+document.querySelectorAll("#atajos button").forEach(b => {
+  b.addEventListener("click", () => {
+    if (ocupado) return;
+    input.value = b.dataset.t;
+    ajustarAlto();
+    enviar();
+  });
+});
+
 // ===== Menú lateral y conversaciones =====
 function abrirMenu() { pintarLista(); document.body.classList.add("menu"); }
 function cerrarMenu() { document.body.classList.remove("menu"); }
@@ -455,7 +537,8 @@ function pintarLista() {
     const fila = document.createElement("div");
     fila.className = "conv" + (c.id === datos.activa ? " act" : "");
     const n = document.createElement("div");
-    n.className = "nombre"; n.textContent = c.titulo;
+    n.className = "nombre";
+    n.textContent = (modoDe(c) === "leccion" ? "📖 " : "") + c.titulo;
     n.addEventListener("click", () => { cambiarA(c.id); });
     const r = document.createElement("button"); r.textContent = "✎"; r.setAttribute("aria-label", "Renombrar");
     const x = document.createElement("button"); x.textContent = "🗑"; x.setAttribute("aria-label", "Borrar");
@@ -470,12 +553,18 @@ function cambiarA(id) {
   datos.activa = id; seleccionado = null; guardar();
   cerrarMenu(); quitarError(); pintar(true);
 }
-function crearConv() {
-  const c = nuevaConv();
+function crearConv(modo) {
+  let c;
+  if (modo === "leccion") {
+    const f = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+    c = nuevaConv("Урок · " + f, false, "leccion");
+  } else {
+    c = nuevaConv();
+  }
   datos.convs.unshift(c);
   datos.activa = c.id; seleccionado = null; guardar();
   cerrarMenu(); quitarError(); pintar(true);
-  input.focus();
+  if (modo !== "leccion") input.focus();
 }
 function renombrarConv(c) {
   pedirTexto("Renombrar conversación", c.titulo, v => {
@@ -489,8 +578,9 @@ function borrarConv(c) {
   if (datos.activa === c.id) datos.activa = datos.convs[0].id;
   seleccionado = null; guardar(); pintarLista(); pintar(true);
 }
-$("btnNueva").addEventListener("click", crearConv);
-$("nuevaGrande").addEventListener("click", crearConv);
+$("btnNueva").addEventListener("click", () => crearConv("charla"));
+$("nuevaGrande").addEventListener("click", () => crearConv("charla"));
+$("nuevaLeccion").addEventListener("click", () => crearConv("leccion"));
 
 // ===== Memoria compartida (manual) =====
 $("btnMemoria").addEventListener("click", () => {
@@ -503,6 +593,13 @@ $("btnRecuerdos").addEventListener("click", () => {
   pedirTexto("Recuerdos de Sukuna", datos.recuerdos, v => { datos.recuerdos = v.trim(); guardar(); },
     "Notas que Сукуна va escribiendo solo mientras conversan. Puedes corregirlas, borrar líneas o vaciar todo.", 12);
 });
+
+// ===== Progreso de japonés =====
+$("btnJapones").addEventListener("click", () => {
+  pedirTexto("Mi progreso de japonés", datos.japones, v => { datos.japones = v.trim(); guardar(); },
+    "Lo que Сукуна sabe de tu japonés: nivel, vocabulario visto, gramática y errores frecuentes. Se actualiza solo con las lecciones y puedes corregirlo a mano.", 12);
+});
+
 $("btnRecordarAhora").addEventListener("click", () => {
   cerrarMenu();
   extraerRecuerdos(activa(), true);
@@ -526,9 +623,10 @@ async function extraerRecuerdos(conv, forzar) {
   const dialogo = nuevos.slice(-20).map(m => (m.rol === "user" ? "ELLA" : "SUKUNA") + ": " + m.texto).join("\n\n");
   const hoy = new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
   const pedido = "FECHA DE HOY: " + hoy +
-    "\n\nNOTAS ACTUALES:\n" + (datos.recuerdos || "(todavía no hay notas)") +
-    "\n\nCONVERSACIÓN NUEVA:\n" + dialogo +
-    "\n\nDevuelve la lista completa y actualizada de notas.";
+    "\n\nNOTAS ACTUALES (RECUERDOS):\n" + (datos.recuerdos || "(todavía no hay notas)") +
+    "\n\nPROGRESO ACTUAL DE JAPONÉS:\n" + (datos.japones || "(todavía no hay notas)") +
+    "\n\nCONVERSACIÓN NUEVA (modo " + (modoDe(conv) === "leccion" ? "lección" : "charla") + "):\n" + dialogo +
+    "\n\nDevuelve las dos listas completas y actualizadas, en el formato indicado.";
 
   try {
     const r = await fetch(WORKER_URL, {
@@ -547,14 +645,23 @@ async function extraerRecuerdos(conv, forzar) {
     if (t.endsWith(CERCA)) t = t.slice(0, -3);
     t = t.trim();
 
-    const anterior = datos.recuerdos || "";
-    if (t.length < 5) throw new Error("respuesta vacía");
-    // Protección: si de golpe se borra casi todo, se ignora
-    if (anterior.length > 400 && t.length < anterior.length * 0.4) throw new Error("la actualización borraba demasiado");
+    const iR = t.indexOf(M_REC), iJ = t.indexOf(M_JAP);
+    if (iR < 0 || iJ < 0 || iJ < iR) throw new Error("formato inesperado");
+    const nuevoRec = t.slice(iR + M_REC.length, iJ).trim();
+    const nuevoJap = t.slice(iJ + M_JAP.length).trim();
 
-    t = t.slice(0, 4000);
-    if (t !== anterior) {
-      datos.recuerdos = t;
+    // Protección: si una lista llega vacía o se borra casi todo, se conserva la anterior
+    const seguro = (nuevo, viejo) => {
+      if (nuevo.length < 5) return viejo;
+      if (viejo.length > 400 && nuevo.length < viejo.length * 0.4) return viejo;
+      return nuevo.slice(0, 4000);
+    };
+    const antR = datos.recuerdos || "", antJ = datos.japones || "";
+    const nr = seguro(nuevoRec, antR), nj = seguro(nuevoJap, antJ);
+
+    if (nr !== antR || nj !== antJ) {
+      datos.recuerdos = nr;
+      datos.japones = nj;
       aviso("🧠 Сукуна запомнил что-то");
     } else if (forzar) {
       aviso("Nada nuevo que recordar.");
@@ -576,6 +683,7 @@ async function enviar() {
   seleccionado = null;
 
   const conv = activa();
+  const modo = modoDe(conv);
   const historial = conv.mensajes.slice(-30).map(m => ({
     role: m.rol === "user" ? "user" : "model",
     parts: [{ text: m.texto }]
@@ -596,6 +704,12 @@ async function enviar() {
   }
   if (datos.recuerdos) {
     personaje += "\n\n12. Твои заметки о собеседнице и о вашей общей истории (ты составил их сам по прошлым разговорам; пользуйся ими естественно, не пересказывай списком и не выдумывай сверх них):\n" + datos.recuerdos;
+  }
+  if (datos.japones) {
+    personaje += "\n\n13. Заметки о её прогрессе в японском (ты ведёшь их сам; опирайся на них, когда речь заходит об обучении):\n" + datos.japones;
+  }
+  if (modo === "leccion") {
+    personaje += "\n\n" + PROMPT_LECCION;
   }
 
   let ok = false;
@@ -621,7 +735,7 @@ async function enviar() {
     if (datos.activa === conv.id) pintar(true); else refrescarIndicador();
   }
 
-  // En segundo plano: cada 3 intercambios actualiza los recuerdos
+  // En segundo plano: cada 3 intercambios actualiza recuerdos y progreso de japonés
   if (ok) extraerRecuerdos(conv, false);
 }
 

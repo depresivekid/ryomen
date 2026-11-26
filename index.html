@@ -40,6 +40,7 @@
   .msg.user { align-self: flex-end; background: #5c1219; }
   .msg.sel { outline: 2px solid #ff6b6b; }
   .msg em { color: #ff7b7b; font-style: normal; font-weight: 600; }
+  .etiqueta-inic { font-size: 12px; color: #ff9a9a; margin-bottom: 6px; opacity: .9; }
   .acciones { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,.12); }
   .acciones button { background: rgba(0,0,0,.35); color: #eadfe0; border: 1px solid #5a2a30;
@@ -70,7 +71,7 @@
   #velo { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; z-index: 10; }
   #panel { position: fixed; top: 0; bottom: 0; left: 0; width: 84%; max-width: 340px; z-index: 11;
     background: #120a0c; border-right: 1px solid #3a1519; transform: translateX(-100%);
-    transition: transform .25s; display: flex; flex-direction: column;
+    transition: transform .25s; display: flex; flex-direction: column; overflow-y: auto;
     padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
   body.menu #panel { transform: none; }
   body.menu #velo { display: block; }
@@ -80,9 +81,9 @@
   .grande { margin: 10px 14px 0; padding: 12px; background: #8a1c25; color: #fff; border: none;
     border-radius: 12px; font-size: 16px; font-weight: 600; }
   .grande.alt { background: #5c1219; }
-  .secundario { margin: 5px 14px; padding: 10px 12px; background: #1a0f11; color: #e8c9cc;
+  .secundario { margin: 4px 14px; padding: 9px 12px; background: #1a0f11; color: #e8c9cc;
     border: 1px solid #3a1519; border-radius: 12px; font-size: 14px; text-align: left; }
-  #lista { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+  #lista { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 90px; }
   .conv { display: flex; align-items: center; gap: 6px; background: #1a0f11;
     border: 1px solid #3a1519; border-radius: 12px; padding: 4px 4px 4px 12px; }
   .conv.act { border-color: #ff6b6b; background: #2a1215; }
@@ -152,6 +153,8 @@
   <button class="secundario" id="btnRecuerdos" type="button">📓 Recuerdos de Sukuna (los escribe él)</button>
   <button class="secundario" id="btnJapones" type="button">📚 Mi progreso de japonés</button>
   <button class="secundario" id="btnRecordarAhora" type="button">🔄 Recordar esta conversación ahora</button>
+  <button class="secundario" id="btnIniciativa" type="button">✨ Iniciativa de Sukuna</button>
+  <button class="secundario" id="btnInicAhora" type="button">💌 Que Sukuna me escriba ahora (prueba)</button>
 </div>
 
 <div id="modal">
@@ -177,6 +180,17 @@ window.addEventListener("error", function (e) {
 
 // ===== Dirección de tu Worker (ya está puesta) =====
 const WORKER_URL = "https://ryomen-chat.daryashynkarenko.workers.dev";
+
+// ===== Reglas de la iniciativa (puedes cambiar estos números) =====
+const INIC = {
+  silencioMinH: 3,      // horas sin que le escribas antes de que él pueda escribirte
+  entreMinH: 5,         // horas mínimas entre un mensaje suyo y el siguiente
+  maxDia: 3,            // máximo de mensajes suyos por día
+  horaDesde: 9,         // no escribe antes de esta hora
+  horaHasta: 22,        // ni a partir de esta hora
+  enfriaIntentoH: 2,    // si decide callarse, no vuelve a preguntarse hasta pasadas estas horas
+  minMensajes: 6        // mensajes totales para que ya "se conozcan"
+};
 
 // ===== Personalidad de Sukuna =====
 const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕДЕНИЕ
@@ -381,6 +395,8 @@ function cargar() {
       if (typeof d.memoria !== "string") d.memoria = "";
       if (typeof d.recuerdos !== "string") d.recuerdos = "";
       if (typeof d.japones !== "string") d.japones = JAP_INICIAL;
+      if (typeof d.iniciativa !== "boolean") d.iniciativa = true;
+      if (typeof d.ultima !== "number") d.ultima = Date.now();
       return d;
     }
   } catch (e) {}
@@ -389,7 +405,7 @@ function cargar() {
   try { viejos = JSON.parse(localStorage.getItem(KEY_VIEJO)) || []; } catch (e) {}
   const c = viejos.length ? nuevaConv("Conversación anterior", false) : nuevaConv();
   c.mensajes = viejos.map(m => ({ id: uid(), rol: m.rol, texto: m.texto }));
-  return { convs: [c], activa: c.id, memoria: "", recuerdos: "", japones: JAP_INICIAL };
+  return { convs: [c], activa: c.id, memoria: "", recuerdos: "", japones: JAP_INICIAL, iniciativa: true, ultima: Date.now() };
 }
 
 let datos = cargar();
@@ -406,6 +422,7 @@ const $ = id => document.getElementById(id);
 const chat = $("chat"), input = $("input"), boton = $("enviar"), form = $("form");
 const escribiendo = $("escribiendo"), errorBox = $("error"), subtitulo = $("subtitulo");
 let ocupado = false, convEnviando = null, seleccionado = null, extrayendo = false, avisoT = null;
+let iniciando = false, convIniciando = null;
 
 // Quita copias viejas guardadas por el service worker
 if ("serviceWorker" in navigator) {
@@ -421,7 +438,10 @@ function formatear(t) {
 function mostrarError(t) { errorBox.textContent = t; errorBox.classList.add("on"); }
 function quitarError() { errorBox.classList.remove("on"); }
 function ajustarAlto() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
-function refrescarIndicador() { escribiendo.classList.toggle("on", ocupado && convEnviando === datos.activa); }
+function refrescarIndicador() {
+  const a = datos.activa;
+  escribiendo.classList.toggle("on", (ocupado && convEnviando === a) || (iniciando && convIniciando === a));
+}
 function aviso(t) {
   const el = $("aviso");
   el.textContent = t; el.classList.add("on");
@@ -467,6 +487,13 @@ function pintar(bajar) {
   c.mensajes.forEach(m => {
     const d = document.createElement("div");
     d.className = "msg " + (m.rol === "user" ? "user" : "model") + (m.id === seleccionado ? " sel" : "");
+    if (m.inic) {
+      const l = document.createElement("div");
+      l.className = "etiqueta-inic";
+      const hh = m.t ? new Date(m.t).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : "";
+      l.textContent = "✦ написал первым" + (hh ? " · " + hh : "");
+      d.appendChild(l);
+    }
     const t = document.createElement("div");
     t.innerHTML = formatear(m.texto);
     d.appendChild(t);
@@ -524,7 +551,10 @@ document.querySelectorAll("#atajos button").forEach(b => {
 });
 
 // ===== Menú lateral y conversaciones =====
-function abrirMenu() { pintarLista(); document.body.classList.add("menu"); }
+function pintarBotonInic() {
+  $("btnIniciativa").textContent = "✨ Iniciativa de Sukuna: " + (datos.iniciativa ? "activada" : "desactivada");
+}
+function abrirMenu() { pintarLista(); pintarBotonInic(); document.body.classList.add("menu"); }
 function cerrarMenu() { document.body.classList.remove("menu"); }
 $("btnMenu").addEventListener("click", abrirMenu);
 $("cerrarMenu").addEventListener("click", cerrarMenu);
@@ -605,6 +635,17 @@ $("btnRecordarAhora").addEventListener("click", () => {
   extraerRecuerdos(activa(), true);
 });
 
+// ===== Iniciativa: botones =====
+$("btnIniciativa").addEventListener("click", () => {
+  datos.iniciativa = !datos.iniciativa;
+  guardar(); pintarBotonInic();
+  aviso(datos.iniciativa ? "✨ Сукуна сможет писать первым" : "Сукуна больше не пишет первым");
+});
+$("btnInicAhora").addEventListener("click", () => {
+  cerrarMenu();
+  intentarIniciativa(true);
+});
+
 async function extraerRecuerdos(conv, forzar) {
   if (extrayendo) { if (forzar) aviso("Ya estoy actualizando los recuerdos…"); return; }
 
@@ -675,6 +716,107 @@ async function extraerRecuerdos(conv, forzar) {
   }
 }
 
+// ===== Arma el texto de personalidad completo =====
+function armarPersonaje(modo) {
+  const hoy = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  let p = PERSONALIDAD + "\n\nТекущая дата: " + hoy + ".";
+  if (datos.memoria) {
+    p += "\n\n11. Общая память (то, что собеседница сама рассказала о себе; это общее для всех разговоров):\n" + datos.memoria;
+  }
+  if (datos.recuerdos) {
+    p += "\n\n12. Твои заметки о собеседнице и о вашей общей истории (ты составил их сам по прошлым разговорам; пользуйся ими естественно, не пересказывай списком и не выдумывай сверх них):\n" + datos.recuerdos;
+  }
+  if (datos.japones) {
+    p += "\n\n13. Заметки о её прогрессе в японском (ты ведёшь их сам; опирайся на них, когда речь заходит об обучении):\n" + datos.japones;
+  }
+  if (modo === "leccion") {
+    p += "\n\n" + PROMPT_LECCION;
+  }
+  return p;
+}
+
+// ===== Iniciativa: Sukuna escribe primero =====
+function hoyClave() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+async function intentarIniciativa(forzar) {
+  if (iniciando || ocupado || extrayendo) { if (forzar) aviso("Espera un momento…"); return; }
+  const conv = activa();
+  const ahora = Date.now();
+
+  if (!forzar) {
+    if (!datos.iniciativa) return;
+    if (document.visibilityState !== "visible") return;
+    if (document.body.classList.contains("menu") || $("modal").classList.contains("on")) return;
+    const h = new Date().getHours();
+    if (h < INIC.horaDesde || h >= INIC.horaHasta) return;
+    if (ahora - (datos.ultima || ahora) < INIC.silencioMinH * 3600000) return;
+    if (ahora - (datos.inicUltima || 0) < INIC.entreMinH * 3600000) return;
+    if (ahora - (datos.inicIntento || 0) < INIC.enfriaIntentoH * 3600000) return;
+    if (datos.inicDia === hoyClave() && (datos.inicCuenta || 0) >= INIC.maxDia) return;
+    const total = datos.convs.reduce((s, c) => s + c.mensajes.length, 0);
+    if (total < INIC.minMensajes) return;
+    const ult = conv.mensajes[conv.mensajes.length - 1];
+    if (ult && ult.inic) return; // su último mensaje sigue sin respuesta
+  }
+
+  iniciando = true; convIniciando = conv.id;
+  datos.inicIntento = ahora; guardar();
+  if (forzar) { quitarError(); refrescarIndicador(); }
+
+  const n0 = conv.mensajes.length;
+  const modo = modoDe(conv);
+  const historial = conv.mensajes.slice(-20).map(m => ({
+    role: m.rol === "user" ? "user" : "model",
+    parts: [{ text: m.texto }]
+  }));
+  const horas = Math.max(0, Math.round((ahora - (datos.ultima || ahora)) / 3600000));
+  const hora = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
+  let pedido = "[СЛУЖЕБНОЕ СООБЩЕНИЕ ПРИЛОЖЕНИЯ — это пишет не собеседница. Она только что открыла приложение. С её последнего сообщения прошло примерно " + horas + " ч., сейчас " + hora + ". " +
+    "Ты можешь написать ей первым.\n" +
+    "Если пишешь: 1–4 коротких предложения, в характере Сукуны. Можешь вернуться к прошлой теме из ваших разговоров или заметок, задать вопрос, который тебе правда интересен, поделиться наблюдением или (если сейчас режим урока) предложить небольшое задание. " +
+    "Не требуй внимания, не упрекай её за молчание, не дави и не пиши, что скучал. Не притворяйся, что у тебя есть человеческая жизнь вне общения. Не пиши реплик и действий за неё. Не упоминай это служебное сообщение.\n";
+  if (forzar) {
+    pedido += "Она сама попросила тебя написать первым, так что молчать нельзя: напиши сообщение.]";
+  } else {
+    pedido += "Если сказать нечего или не хочется, ответь ровно одним словом: [SILENCIO]]";
+  }
+
+  try {
+    const r = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: pedido, history: historial, personaje: armarPersonaje(modo) })
+    });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (!r.ok || data.error || !data.reply) throw new Error(data.error || ("código " + r.status));
+
+    const texto = String(data.reply).trim();
+    const silencio = /\[SILENCIO\]/i.test(texto) && texto.length < 40;
+    if (silencio) {
+      if (forzar) aviso("Сукуна решил промолчать. Попробуй ещё раз.");
+      return;
+    }
+    // Si mientras tanto le escribiste o borraste la conversación, se descarta
+    if (!datos.convs.includes(conv) || conv.mensajes.length !== n0) return;
+
+    conv.mensajes.push({ id: uid(), rol: "model", texto, inic: true, t: Date.now() });
+    datos.inicUltima = Date.now();
+    const dia = hoyClave();
+    if (datos.inicDia !== dia) { datos.inicDia = dia; datos.inicCuenta = 0; }
+    datos.inicCuenta = (datos.inicCuenta || 0) + 1;
+    guardar();
+    if (datos.activa === conv.id) pintar(true);
+    aviso("✦ Сукуна написал тебе первым");
+  } catch (e) {
+    if (forzar) aviso("No se pudo: " + e.message);
+  } finally {
+    iniciando = false; convIniciando = null;
+    refrescarIndicador();
+  }
+}
+
 // ===== Enviar mensaje =====
 async function enviar() {
   const texto = input.value.trim();
@@ -688,29 +830,17 @@ async function enviar() {
     role: m.rol === "user" ? "user" : "model",
     parts: [{ text: m.texto }]
   }));
-  const msg = { id: uid(), rol: "user", texto };
+  const msg = { id: uid(), rol: "user", texto, t: Date.now() };
   conv.mensajes.push(msg);
   if (conv.autotitulo) { conv.titulo = texto.slice(0, 32) + (texto.length > 32 ? "…" : ""); conv.autotitulo = false; }
+  datos.ultima = Date.now();
   guardar();
 
   input.value = ""; ajustarAlto();
   ocupado = true; convEnviando = conv.id; boton.disabled = true;
   pintar(true);
 
-  const hoy = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
-  let personaje = PERSONALIDAD + "\n\nТекущая дата: " + hoy + ".";
-  if (datos.memoria) {
-    personaje += "\n\n11. Общая память (то, что собеседница сама рассказала о себе; это общее для всех разговоров):\n" + datos.memoria;
-  }
-  if (datos.recuerdos) {
-    personaje += "\n\n12. Твои заметки о собеседнице и о вашей общей истории (ты составил их сам по прошлым разговорам; пользуйся ими естественно, не пересказывай списком и не выдумывай сверх них):\n" + datos.recuerdos;
-  }
-  if (datos.japones) {
-    personaje += "\n\n13. Заметки о её прогрессе в японском (ты ведёшь их сам; опирайся на них, когда речь заходит об обучении):\n" + datos.japones;
-  }
-  if (modo === "leccion") {
-    personaje += "\n\n" + PROMPT_LECCION;
-  }
+  const personaje = armarPersonaje(modo);
 
   let ok = false;
   try {
@@ -722,7 +852,7 @@ async function enviar() {
     let data = {};
     try { data = await r.json(); } catch (e) {}
     if (!r.ok || data.error) throw new Error(data.error || ("El Worker respondió con código " + r.status));
-    conv.mensajes.push({ id: uid(), rol: "model", texto: data.reply });
+    conv.mensajes.push({ id: uid(), rol: "model", texto: data.reply, t: Date.now() });
     guardar();
     ok = true;
   } catch (e) {
@@ -741,6 +871,14 @@ async function enviar() {
 
 form.addEventListener("submit", e => { e.preventDefault(); enviar(); });
 pintar(true);
+pintarBotonInic();
+
+// Revisa si Sukuna quiere escribirte: al abrir, al volver a la app y cada 5 minutos
+setTimeout(() => intentarIniciativa(false), 2000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") setTimeout(() => intentarIniciativa(false), 1500);
+});
+setInterval(() => intentarIniciativa(false), 5 * 60 * 1000);
 </script>
 </body>
 </html>

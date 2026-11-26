@@ -41,6 +41,7 @@
   .msg.sel { outline: 2px solid #ff6b6b; }
   .msg em { color: #ff7b7b; font-style: normal; font-weight: 600; }
   .etiqueta-inic { font-size: 12px; color: #ff9a9a; margin-bottom: 6px; opacity: .9; }
+  .diag { font-size: 12px; color: #8d7a7c; margin-top: 8px; }
   .acciones { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,.12); }
   .acciones button { background: rgba(0,0,0,.35); color: #eadfe0; border: 1px solid #5a2a30;
@@ -410,6 +411,7 @@ function cargar() {
 
 let datos = cargar();
 function guardar() { try { localStorage.setItem(KEY, JSON.stringify(datos)); } catch (e) {} }
+guardar(); // guarda de inmediato los campos nuevos (por ejemplo la hora de tu último mensaje)
 function activa() {
   let c = datos.convs.find(x => x.id === datos.activa);
   if (!c) { c = datos.convs[0]; datos.activa = c.id; }
@@ -422,7 +424,7 @@ const $ = id => document.getElementById(id);
 const chat = $("chat"), input = $("input"), boton = $("enviar"), form = $("form");
 const escribiendo = $("escribiendo"), errorBox = $("error"), subtitulo = $("subtitulo");
 let ocupado = false, convEnviando = null, seleccionado = null, extrayendo = false, avisoT = null;
-let iniciando = false, convIniciando = null;
+let iniciando = false, inicMostrar = false, convIniciando = null, inicCtrl = null;
 
 // Quita copias viejas guardadas por el service worker
 if ("serviceWorker" in navigator) {
@@ -440,7 +442,8 @@ function quitarError() { errorBox.classList.remove("on"); }
 function ajustarAlto() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
 function refrescarIndicador() {
   const a = datos.activa;
-  escribiendo.classList.toggle("on", (ocupado && convEnviando === a) || (iniciando && convIniciando === a));
+  // El "думает" solo se ve cuando TÚ esperas una respuesta (o pulsaste el botón de prueba), no en intentos de fondo
+  escribiendo.classList.toggle("on", (ocupado && convEnviando === a) || (iniciando && inicMostrar && convIniciando === a));
 }
 function aviso(t) {
   const el = $("aviso");
@@ -449,6 +452,31 @@ function aviso(t) {
   avisoT = setTimeout(() => el.classList.remove("on"), 2800);
 }
 input.addEventListener("input", ajustarAlto);
+
+// ===== Llamada al Worker, con tiempo máximo y posibilidad de cancelar =====
+async function pedir(cuerpo, ms, ctrl) {
+  const c = ctrl || new AbortController();
+  const id = setTimeout(() => { c.timedOut = true; c.abort(); }, ms);
+  try {
+    const r = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cuerpo),
+      signal: c.signal
+    });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (!r.ok || data.error || !data.reply) {
+      throw new Error(data.error || ("El Worker respondió con código " + r.status));
+    }
+    return data;
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error(c.timedOut ? "tardó demasiado en responder" : "cancelado");
+    throw e;
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 // ===== Ventana para editar texto =====
 let modalCb = null;
@@ -498,6 +526,14 @@ function pintar(bajar) {
     t.innerHTML = formatear(m.texto);
     d.appendChild(t);
     if (m.id === seleccionado) {
+      if (m.modelo && typeof m.ms === "number") {
+        const dg = document.createElement("div");
+        dg.className = "diag";
+        dg.textContent = "⚙ " + m.modelo + " · " + (m.ms / 1000).toFixed(1) + " s (Gemini)" +
+          (typeof m.tot === "number" ? " · " + (m.tot / 1000).toFixed(1) + " s total" : "") +
+          (m.fallos ? " · intentos fallidos: " + m.fallos : "");
+        d.appendChild(dg);
+      }
       const a = document.createElement("div");
       a.className = "acciones";
       const b1 = document.createElement("button"); b1.textContent = "✎ Editar";
@@ -648,6 +684,8 @@ $("btnInicAhora").addEventListener("click", () => {
 
 async function extraerRecuerdos(conv, forzar) {
   if (extrayendo) { if (forzar) aviso("Ya estoy actualizando los recuerdos…"); return; }
+  // En segundo plano no compite con tus mensajes ni con la iniciativa
+  if (!forzar && (ocupado || iniciando)) return;
 
   let desde = typeof conv.extraidoHasta === "number" ? conv.extraidoHasta : Math.max(0, conv.mensajes.length - 10);
   if (desde > conv.mensajes.length) desde = conv.mensajes.length;
@@ -670,14 +708,7 @@ async function extraerRecuerdos(conv, forzar) {
     "\n\nDevuelve las dos listas completas y actualizadas, en el formato indicado.";
 
   try {
-    const r = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: pedido, history: [], personaje: INSTRUCCION_MEMORIA })
-    });
-    let data = {};
-    try { data = await r.json(); } catch (e) {}
-    if (!r.ok || data.error || !data.reply) throw new Error(data.error || ("código " + r.status));
+    const data = await pedir({ message: pedido, history: [], personaje: INSTRUCCION_MEMORIA }, 70000);
 
     // Quita las marcas de bloque de código si Gemini las agrega
     const CERCA = String.fromCharCode(96, 96, 96);
@@ -759,7 +790,9 @@ async function intentarIniciativa(forzar) {
     if (ult && ult.inic) return; // su último mensaje sigue sin respuesta
   }
 
-  iniciando = true; convIniciando = conv.id;
+  iniciando = true; inicMostrar = !!forzar; convIniciando = conv.id;
+  inicCtrl = new AbortController();
+  const ctrl = inicCtrl;
   datos.inicIntento = ahora; guardar();
   if (forzar) { quitarError(); refrescarIndicador(); }
 
@@ -783,14 +816,7 @@ async function intentarIniciativa(forzar) {
   }
 
   try {
-    const r = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: pedido, history: historial, personaje: armarPersonaje(modo) })
-    });
-    let data = {};
-    try { data = await r.json(); } catch (e) {}
-    if (!r.ok || data.error || !data.reply) throw new Error(data.error || ("código " + r.status));
+    const data = await pedir({ message: pedido, history: historial, personaje: armarPersonaje(modo) }, 60000, ctrl);
 
     const texto = String(data.reply).trim();
     const silencio = /\[SILENCIO\]/i.test(texto) && texto.length < 40;
@@ -801,7 +827,7 @@ async function intentarIniciativa(forzar) {
     // Si mientras tanto le escribiste o borraste la conversación, se descarta
     if (!datos.convs.includes(conv) || conv.mensajes.length !== n0) return;
 
-    conv.mensajes.push({ id: uid(), rol: "model", texto, inic: true, t: Date.now() });
+    conv.mensajes.push({ id: uid(), rol: "model", texto, inic: true, t: Date.now(), modelo: data.modelo, ms: data.ms, fallos: data.fallos });
     datos.inicUltima = Date.now();
     const dia = hoyClave();
     if (datos.inicDia !== dia) { datos.inicDia = dia; datos.inicCuenta = 0; }
@@ -810,9 +836,9 @@ async function intentarIniciativa(forzar) {
     if (datos.activa === conv.id) pintar(true);
     aviso("✦ Сукуна написал тебе первым");
   } catch (e) {
-    if (forzar) aviso("No se pudo: " + e.message);
+    if (forzar && e.message !== "cancelado") aviso("No se pudo: " + e.message);
   } finally {
-    iniciando = false; convIniciando = null;
+    iniciando = false; inicMostrar = false; convIniciando = null; inicCtrl = null;
     refrescarIndicador();
   }
 }
@@ -823,6 +849,7 @@ async function enviar() {
   if (!texto || ocupado) return;
   quitarError();
   seleccionado = null;
+  if (inicCtrl) inicCtrl.abort(); // si Sukuna preparaba un mensaje por su cuenta, se cancela
 
   const conv = activa();
   const modo = modoDe(conv);
@@ -841,18 +868,15 @@ async function enviar() {
   pintar(true);
 
   const personaje = armarPersonaje(modo);
+  const t0 = Date.now();
 
   let ok = false;
   try {
-    const r = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: texto, history: historial, personaje })
+    const data = await pedir({ message: texto, history: historial, personaje }, 70000);
+    conv.mensajes.push({
+      id: uid(), rol: "model", texto: data.reply, t: Date.now(),
+      modelo: data.modelo, ms: data.ms, fallos: data.fallos, tot: Date.now() - t0
     });
-    let data = {};
-    try { data = await r.json(); } catch (e) {}
-    if (!r.ok || data.error) throw new Error(data.error || ("El Worker respondió con código " + r.status));
-    conv.mensajes.push({ id: uid(), rol: "model", texto: data.reply, t: Date.now() });
     guardar();
     ok = true;
   } catch (e) {
@@ -865,8 +889,8 @@ async function enviar() {
     if (datos.activa === conv.id) pintar(true); else refrescarIndicador();
   }
 
-  // En segundo plano: cada 3 intercambios actualiza recuerdos y progreso de japonés
-  if (ok) extraerRecuerdos(conv, false);
+  // En segundo plano, con calma: actualiza recuerdos y progreso de japonés
+  if (ok) setTimeout(() => extraerRecuerdos(conv, false), 15000);
 }
 
 form.addEventListener("submit", e => { e.preventDefault(); enviar(); });
@@ -874,9 +898,9 @@ pintar(true);
 pintarBotonInic();
 
 // Revisa si Sukuna quiere escribirte: al abrir, al volver a la app y cada 5 minutos
-setTimeout(() => intentarIniciativa(false), 2000);
+setTimeout(() => intentarIniciativa(false), 3000);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") setTimeout(() => intentarIniciativa(false), 1500);
+  if (document.visibilityState === "visible") setTimeout(() => intentarIniciativa(false), 2000);
 });
 setInterval(() => intentarIniciativa(false), 5 * 60 * 1000);
 </script>

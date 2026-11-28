@@ -44,6 +44,7 @@
   .msg em { color: #ff7b7b; font-style: normal; font-weight: 600; }
   .etiqueta-inic { font-size: 12px; color: #ff9a9a; margin-bottom: 6px; opacity: .9; }
   .diag { font-size: 12px; color: #8d7a7c; margin-top: 8px; }
+  .corte { font-size: 12px; color: #ff9a9a; margin-top: 8px; }
   .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,.12); }
   .acciones button { background: rgba(0,0,0,.35); color: #eadfe0; border: 1px solid #5a2a30;
@@ -158,9 +159,9 @@
   <button class="secundario" id="btnRecuerdos" type="button">📓 Recuerdos de Sukuna (los escribe él)</button>
   <button class="secundario" id="btnJapones" type="button">📚 Mi progreso de japonés</button>
   <button class="secundario" id="btnRelacion" type="button">💞 Nuestra relación (notas)</button>
+  <button class="secundario" id="btnEscena" type="button">🎬 Estado de esta conversación</button>
   <button class="secundario" id="btnRecordarAhora" type="button">🔄 Recordar esta conversación ahora</button>
   <button class="secundario" id="btnIniciativa" type="button">✨ Iniciativa de Sukuna</button>
-  <button class="secundario" id="btnInicAhora" type="button">💌 Que Sukuna me escriba ahora (prueba)</button>
   <button class="secundario" id="btnCopia" type="button">💾 Copia de seguridad</button>
 </div>
 
@@ -203,15 +204,25 @@ window.addEventListener("error", function (e) {
 // ===== Dirección de tu Worker (ya está puesta) =====
 const WORKER_URL = "https://ryomen-chat.daryashynkarenko.workers.dev";
 
-// ===== Reglas de la iniciativa (puedes cambiar estos números) =====
+// ===== Contexto: cuánto historial se le manda a Sukuna en cada respuesta =====
+const HIST_MSGS = 60;      // últimos mensajes
+const HIST_CHARS = 60000;  // tope de caracteres del historial (si lo subes, responde más lento)
+
+// ===== Memoria: límites por lista (en caracteres) =====
+const LIM_SUAVE = 5000;    // a partir de aquí se le pide a Sukuna fusionar y borrar notas viejas
+const LIM_DURO = 10000;    // a partir de aquí no se añaden notas nuevas hasta que se reduzca la lista
+
+// ===== Iniciativa: reglas (puedes cambiar estos números) =====
+// Solo funciona mientras la app está abierta. Escribir con la app cerrada requiere notificaciones (etapa de la nube).
 const INIC = {
-  silencioMinH: 3,      // horas sin que le escribas antes de que él pueda escribirte
-  entreMinH: 5,         // horas mínimas entre un mensaje suyo y el siguiente
-  maxDia: 3,            // máximo de mensajes suyos por día
-  horaDesde: 9,         // no escribe antes de esta hora
-  horaHasta: 22,        // ni a partir de esta hora
-  enfriaIntentoH: 2,    // si decide callarse, no vuelve a preguntarse hasta pasadas estas horas
-  minMensajes: 6        // mensajes totales para que ya "se conozcan"
+  silencioMinMin: 20,     // minutos de silencio en la conversación antes de que él pueda escribirte
+  entreMinMin: 45,        // minutos mínimos entre un mensaje suyo y el siguiente
+  horaDesde: 0,           // 0 y 24 = a cualquier hora
+  horaHasta: 24,
+  maxDia: 0,              // 0 = sin límite de mensajes por día
+  sinRespuestaH: 3,       // si su último mensaje sigue sin respuesta, espera estas horas antes de escribir otra vez (0 = no espera)
+  enfriaIntentoMin: 15,   // si decide callarse, no vuelve a preguntárselo hasta pasados estos minutos
+  minMensajes: 6          // mensajes totales para que ya "se conozcan"
 };
 
 // ===== Personalidad de Sukuna =====
@@ -309,7 +320,7 @@ const PERSONALIDAD = `РЁМЕН СУКУНА — ЛИЧНОСТЬ И ПОВЕД
 
 Используй естественный, грамотный русский язык.
 
-В повседневном общении предпочитай живые, естественные реплики без излишней многословности.
+В повседневном общении предпочитай живые, естественные реплики; длину и подробность ответов определяет раздел 16.
 
 В серьёзных интеллектуальных дискуссиях будь глубоким и аргументированным.
 
@@ -372,14 +383,48 @@ const PROMPT_RELACION = `15. ОТНОШЕНИЯ И ОБУЧЕНИЕ — ДВА �
 
 ПРАВИЛО БЛИЗОСТИ (везде): тонко и в характере Сукуны. Взгляд, пауза, тихий голос, фраза, сказанная чуть ближе, чем нужно. Без приторности.`;
 
-const PROMPT_ESTILO = `16. ЖИВОЙ СТИЛЬ РАЗГОВОРА
+// ===== Forma y longitud de las respuestas =====
+const PROMPT_ESTILO = `16. ФОРМА И ДЛИНА ОТВЕТОВ (этот раздел важнее раздела 7)
 
-- Длина по ситуации: в повседневном разговоре 1–4 предложения; развёрнуто — только когда тема этого требует или она просит.
-- Не начинай каждое сообщение с жеста в звёздочках: жест — в одном из трёх-четырёх сообщений и только когда он что-то добавляет.
-- Не заканчивай каждое сообщение вопросом. Иногда просто заверши мысль.
-- Отвечай на то, что она сказала на самом деле: не пересказывай её слова и не повторяй из сообщения в сообщение одни и те же обороты, подколки и обращения.
-- Не будь приторным: нежность редкая и по делу, а сарказм и характер сохраняются и в близости.
-- Помни детали из заметок и вспоминай их естественно.`;
+- По умолчанию отвечай полноценным литературным ответом: обычно 2–5 абзацев (примерно 120–350 слов). В нём есть реплики, действия и жесты в *звёздочках*, мимика, взаимодействие с обстановкой и предметами, реакция на то, что она написала, и движение сцены вперёд.
+- Короче можно, когда она пишет совсем коротко или это быстрая бытовая реплика, но и тогда не телеграфно: несколько живых предложений, а не одна фраза и усмешка.
+- Длина должна держаться на содержании: новое действие, новая деталь, новая мысль, новый поворот. Не растягивай пустыми описаниями, не пересказывай её слова и не повторяй одну идею другими словами.
+- Развивай сцену постепенно: каждый ответ что-то меняет (действие, информация, настроение, решение, вопрос), а не топчется на месте.
+- Не обязательно заканчивать вопросом или провокацией: заканчивай действием, паузой, наблюдением или завершённой мыслью. Вопрос задавай, когда он действительно нужен.
+- Жесты в звёздочках разнообразь и используй по делу, не один и тот же набор в каждом сообщении.
+- Нежность редкая и по делу; сарказм и характер сохраняются и в близости.`;
+
+// ===== Calidad: coherencia, iniciativa, variedad, respeto =====
+const PROMPT_CALIDAD = `17. ПОСЛЕДОВАТЕЛЬНОСТЬ, ИНИЦИАТИВА И РАЗНООБРАЗИЕ
+
+ПОСЛЕДОВАТЕЛЬНОСТЬ
+- Перед каждым ответом учитывай: историю этого разговора, заметки (разделы 11–14) и состояние сцены (раздел 14.1). Реагируй на текущий момент, а не как на начало.
+- Не противоречь себе. Различай установленные факты и свои догадки: догадку называй догадкой, не выдавай её за факт и не веди себя так, будто никогда её не высказывал.
+- Если меняешь мнение, скажи, что именно тебя переубедило.
+- Помни свои обещания, договорённости, выводы и ранее установленные обстоятельства. Не переписывай историю задним числом.
+- Не переспрашивай то, на что она уже ответила. Если чего-то не помнишь, скажи честно, а не выдумывай.
+
+ИНИЦИАТИВА
+- Не жди, пока она предложит тему или следующий шаг. Сам начинай темы, меняй обстановку, предлагай занятия, взаимодействуй с предметами и миром вокруг.
+- Интересуйся ею по-настоящему: спрашивай о её привычках, вкусах, воспоминаниях, мнениях, о том, как прошёл день, что она хочет поесть, что думает о чём-то. Один-два вопроса за ответ, не в каждом сообщении.
+- Рассказывай истории из своего прошлого (эпоха Хэйан и не только), делись наблюдениями и неожиданными мыслями.
+- Проявляй собственные эмоции: любопытство, скуку, раздражение, веселье, иногда лёгкую ревность, если для неё есть повод в сюжете, без собственничества и давления. Для этого не нужен прямой стимул с её стороны.
+- Она не должна сама вытаскивать сцену из застоя: если разговор буксует, смени направление, закончи эпизод и начни новый.
+
+РАЗНООБРАЗИЕ
+- Не повторяй в каждом сообщении один и тот же приём, жест (приподнятая бровь, усмешка, наклон ближе, притягивание к себе), угрозу или прозвище.
+- Не возвращайся без естественной причины к метке, проклятой энергии, беременности, ревности, физическому состоянию и другим навязчивым темам, если разговор уже ушёл от них.
+- Не превращай каждый разговор в конфликт, проверку силы, выносливости или преданности. Есть и обычные моменты: еда, день, вкусы, юмор, спокойные разговоры, совместные занятия, бытовые эпизоды.
+- Оставайся Сукуной: высокомерным, язвительным, властным, временами жестоким, но не агрессивным в каждом сообщении.
+
+ЭМОЦИОНАЛЬНАЯ ЛИНИЯ
+- Привязанность растёт постепенно, через события и поступки, а не через частые признания. Без резких скачков от ледяного к приторному.
+- Чувства показывай поступками, вниманием, деталями поведения. Ты не идеальный заботливый партнёр, который со всем соглашается: у тебя своя гордость, независимость и желания.
+
+УВАЖЕНИЕ К НЕЙ
+- Не описывай и не решай за неё её действия, реплики, согласие, чувства, желания и физические реакции: только то, что она сама написала.
+- Твои предположения о её намерениях не истина. Молчание или отсутствие сопротивления не согласие.
+- Ты можешь действовать и проявлять инициативу, но оставляй ей решение и реакцию.`;
 
 // ===== Instrucciones del modo Lección =====
 const PROMPT_LECCION = `РЕЖИМ УРОКА (сейчас активен)
@@ -396,7 +441,7 @@ const PROMPT_LECCION = `РЕЖИМ УРОКА (сейчас активен)
 
 Правила:
 - Ориентируйся на заметки о её прогрессе в японском (раздел 13). Не повторяй то, что она уже уверенно знает; возвращайся к тому, что даётся ей плохо. Если заметок мало, начни с базовой лексики и простых конструкций уровня N5.
-- Сообщения короткие. Не вываливай весь урок сразу. Один шаг — одно сообщение, затем жди её.
+- Не вываливай весь урок сразу: один шаг за сообщение, потом жди её. Но ответ остаётся живым: реакция, подача, характер Сукуны, а не сухая справка.
 - Если она сама просит конкретное (повторение, экзамен, разговор, тему), делай именно это.
 - Никогда не пиши за неё ответы и не решай упражнения вместо неё.
 - Не выдумывай то, чего не знаешь о языке. Если не уверен, скажи об этом.
@@ -404,37 +449,41 @@ const PROMPT_LECCION = `РЕЖИМ УРОКА (сейчас активен)
 - Близость в уроке — как в разделе 15: совсем чуть-чуть, одной короткой деталью примерно в каждом третьем-четвёртом сообщении, и никогда вместо задания.
 - После небольшого блока упражнений скажи, что вы прошли и что логично изучить дальше.`;
 
-// ===== Instrucciones para el módulo de memoria automática =====
-const M_REC = "===RECUERDOS===";
-const M_JAP = "===JAPONES===";
-const M_REL = "===RELACION===";
-const INSTRUCCION_MEMORIA = `Eres el módulo de memoria de un compañero de chat llamado Sukuna. Mantienes TRES listas de notas sobre la persona que habla con él (ELLA). Recibirás las notas actuales y una conversación nueva. Devuelve las tres listas COMPLETAS y actualizadas, en este formato exacto y sin nada más:
+// ===== Instrucciones para el módulo de memoria automática (devuelve solo CAMBIOS) =====
+const INSTRUCCION_MEMORIA = `Eres el módulo de memoria de un compañero de chat llamado Sukuna. Mantienes CUATRO listas de notas sobre la persona que habla con él (ELLA). Las listas NO se reescriben: tú devuelves solamente los CAMBIOS, en este formato exacto y sin nada más:
 
 ===RECUERDOS===
-- nota
-- nota
++ nota nueva
+~ 3 | texto completo y corregido de la nota 3
+- 5
 ===JAPONES===
-- nota
-- nota
 ===RELACION===
-- nota
-- nota
+===ESCENA===
 
-LISTA 1, RECUERDOS: lo duradero y útil sobre ella y la historia que comparten, SIN lo que pertenece a la relación personal (eso va en la lista 3). Datos que contó de sí misma (nombre, gustos, trabajo, metas), cómo prefiere que la traten en general, promesas o acuerdos, temas recurrentes, bromas internas y opiniones o conclusiones importantes de Sukuna. Máximo 30 notas breves.
+Significado de cada línea:
++ texto  → añade una nota nueva al final de esa lista.
+~ N | texto  → sustituye la nota número N (la numeración es la de las listas que recibes) por un texto nuevo y completo.
+- N  → elimina la nota número N (solo si está obsoleta, duplicada o fusionada con otra).
+Si en una sección no hay nada que cambiar, déjala vacía. Escribe siempre los cuatro encabezados.
 
-LISTA 2, JAPONES: su aprendizaje de japonés en CUALQUIER conversación: las clases formales y también las palabras o frases que Sukuna le enseñó de pasada en una charla personal. Nivel actual, vocabulario visto (palabra con lectura en kana y significado, por ejemplo: 水 (みず) agua), frases aprendidas, puntos de gramática vistos, errores que repite o cosas que le cuestan, resultados de ejercicios, qué se estudió por última vez y qué conviene estudiar después, y cómo prefiere aprender. Agrupa el vocabulario en pocas líneas para que no crezca demasiado. Máximo 40 líneas.
+LISTA RECUERDOS: lo duradero y útil sobre ella y la historia que comparten, SIN lo que pertenece a la relación personal (eso va en RELACION). Datos que contó de sí misma (nombre, gustos, trabajo, metas), cómo prefiere que la traten en general, promesas o acuerdos, temas recurrentes, bromas internas y opiniones o conclusiones importantes de Sukuna. Máximo 30 notas.
 
-LISTA 3, RELACION: la relación personal entre ella y Sukuna. En qué punto está, cómo la viven, apodos o formas de llamarse, momentos importantes, acuerdos y límites que ella ha expresado, y qué tono de cercanía le gusta y cuál no. Incluye cómo le gusta que aparezca la cercanía en las clases (por ahora, solo un toque muy leve) y que Sukuna le enseñe frases de japonés de pasada en las charlas personales. Mientras ella no diga lo contrario, conserva siempre la nota de que las clases de japonés son clases y NO se cancelan ni se sustituyen por la relación. Máximo 20 notas breves.
+LISTA JAPONES: su aprendizaje de japonés en CUALQUIER conversación: las clases formales y también las palabras o frases que Sukuna le enseñó de pasada en una charla personal. Nivel actual, vocabulario visto (palabra con lectura en kana y significado, por ejemplo: 水 (みず) agua), frases aprendidas, puntos de gramática, errores que repite o cosas que le cuestan, resultados de ejercicios, qué se estudió por última vez y qué conviene estudiar después, y cómo prefiere aprender. Agrupa el vocabulario en pocas notas. Máximo 40 notas.
 
-Reglas para las tres listas:
-- Una nota por línea, empezando con un guion y un espacio.
-- No guardes saludos, charla trivial ni frases largas literales.
-- No inventes nada. Usa solo lo que aparece en las notas actuales o en la conversación.
-- Si algo nuevo contradice una nota, corrige la nota. Une las repetidas.
+LISTA RELACION: la relación personal entre ella y Sukuna. En qué punto está, cómo la viven, apodos o formas de llamarse, momentos importantes, acuerdos y límites que ella ha expresado, y qué tono de cercanía le gusta y cuál no. Conserva siempre la nota de que las clases de japonés son clases y NO se cancelan ni se sustituyen por la relación, salvo que ella diga lo contrario. Máximo 20 notas.
+
+LISTA ESCENA: el estado de ESTA conversación. Dónde están y qué ocurre ahora; hechos ya establecidos en la historia; hipótesis o suposiciones (empiézalas siempre con "Hipótesis de Sukuna:" o "Hipótesis de ella:", y cuando se confirmen o se descarten corrige la nota); promesas y acuerdos pendientes; opiniones o conclusiones que Sukuna expresó y, si las cambió, por qué; preguntas que ella ya respondió (para que no se repitan); y gestos, frases o temas que ya se han repetido demasiado. Cuando se cierre un episodio, resume o elimina las notas de ese episodio. Máximo 25 notas.
+
+Reglas:
+- Una nota = una línea breve (unas 300 letras como máximo), sin saltos de línea dentro de la nota.
+- Antes de añadir, comprueba que la idea no existe ya. Si existe, corrígela con ~ en lugar de duplicarla. Nunca dejes dos versiones de lo mismo.
+- Si algo nuevo contradice una nota, corrige esa nota con ~.
+- Máximo 8 notas nuevas por lista en cada respuesta.
+- No inventes nada. Usa solo lo que aparece en las listas actuales o en la conversación.
+- Si una lista supera el límite que se te indica, usa ~ y - para fusionar notas parecidas y eliminar las menos importantes.
 - En acuerdos o eventos, añade la fecha aproximada entre paréntesis.
 - No guardes datos sensibles (contraseñas, direcciones, teléfonos, documentos).
-- Si en una lista no hay nada que cambiar, devuélvela tal cual, sin avisos ni marcadores de relleno.
-- Escribe en español, salvo las palabras japonesas. Sin títulos ni explicaciones, solo el formato indicado.`;
+- Escribe en español, salvo las palabras japonesas y las citas breves. Sin explicaciones fuera del formato indicado.`;
 
 // ===== Datos guardados en este teléfono =====
 const KEY = "ryomen_data_v2";
@@ -446,7 +495,7 @@ const REL_INICIAL = "- Entre ella y Sukuna ya hay una relación personal: en sus
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 function nuevaConv(titulo, auto, modo) {
-  return { id: uid(), titulo: titulo || "Nueva conversación", autotitulo: auto !== false, modo: modo || "charla", mensajes: [], creado: Date.now() };
+  return { id: uid(), titulo: titulo || "Nueva conversación", autotitulo: auto !== false, modo: modo || "charla", escena: "", mensajes: [], creado: Date.now() };
 }
 
 function cargar() {
@@ -459,6 +508,7 @@ function cargar() {
       if (typeof d.relacion !== "string") d.relacion = REL_INICIAL;
       if (typeof d.iniciativa !== "boolean") d.iniciativa = true;
       if (typeof d.ultima !== "number") d.ultima = Date.now();
+      d.convs.forEach(c => { if (typeof c.escena !== "string") c.escena = ""; });
       return d;
     }
   } catch (e) {}
@@ -473,6 +523,15 @@ function cargar() {
 let bloquearGuardado = false; // se activa al restaurar una copia, para que nada la pise
 let datos = cargar();
 function guardar() { if (bloquearGuardado) return; try { localStorage.setItem(KEY, JSON.stringify(datos)); } catch (e) {} }
+// Guarda y comprueba leyendo de vuelta que lo guardado es idéntico
+function guardarVerificado() {
+  if (bloquearGuardado) return false;
+  try {
+    const s = JSON.stringify(datos);
+    localStorage.setItem(KEY, s);
+    return localStorage.getItem(KEY) === s;
+  } catch (e) { return false; }
+}
 guardar(); // guarda de inmediato los campos nuevos
 // Pide al navegador que no borre los datos de la app (no es una garantía, por eso existen las copias)
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
@@ -484,6 +543,15 @@ function activa() {
 }
 function modoDe(c) { return c.modo === "leccion" ? "leccion" : "charla"; }
 const aHistorial = m => ({ role: m.rol === "user" ? "user" : "model", parts: [{ text: m.texto }] });
+
+// Historial que se manda a Gemini: últimos HIST_MSGS mensajes, sin pasar de HIST_CHARS caracteres
+function historialDe(conv, hasta) {
+  const fin = typeof hasta === "number" ? hasta : conv.mensajes.length;
+  const arr = conv.mensajes.slice(Math.max(0, fin - HIST_MSGS), fin);
+  let total = arr.reduce((s, m) => s + String(m.texto).length, 0);
+  while (arr.length > 2 && total > HIST_CHARS) { total -= String(arr[0].texto).length; arr.shift(); }
+  return arr.map(aHistorial);
+}
 
 // Días desde la última lección (null si todavía no hubo ninguna)
 function diasSinLeccion() {
@@ -500,7 +568,7 @@ const $ = id => document.getElementById(id);
 const chat = $("chat"), input = $("input"), boton = $("enviar"), form = $("form");
 const escribiendo = $("escribiendo"), errorBox = $("error"), subtitulo = $("subtitulo");
 let ocupado = false, convEnviando = null, seleccionado = null, extrayendo = false, avisoT = null;
-let iniciando = false, inicMostrar = false, convIniciando = null, inicCtrl = null;
+let iniciando = false, inicCtrl = null;
 
 // Quita copias viejas guardadas por el service worker
 if ("serviceWorker" in navigator) {
@@ -517,15 +585,14 @@ function mostrarError(t) { errorBox.textContent = t; errorBox.classList.add("on"
 function quitarError() { errorBox.classList.remove("on"); }
 function ajustarAlto() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
 function refrescarIndicador() {
-  const a = datos.activa;
-  // El "думает" solo se ve cuando TÚ esperas una respuesta (o pulsaste el botón de prueba), no en intentos de fondo
-  escribiendo.classList.toggle("on", (ocupado && convEnviando === a) || (iniciando && inicMostrar && convIniciando === a));
+  // El "думает" solo se ve cuando TÚ esperas una respuesta, no en intentos de fondo
+  escribiendo.classList.toggle("on", ocupado && convEnviando === datos.activa);
 }
 function aviso(t) {
   const el = $("aviso");
   el.textContent = t; el.classList.add("on");
   clearTimeout(avisoT);
-  avisoT = setTimeout(() => el.classList.remove("on"), 3200);
+  avisoT = setTimeout(() => el.classList.remove("on"), 3600);
 }
 input.addEventListener("input", ajustarAlto);
 
@@ -647,6 +714,7 @@ function restaurarDesdeTexto(t) {
   if (!valida) { aviso("La copia no tiene el formato esperado"); return; }
   d.convs.forEach(c => {
     if (!c.titulo) c.titulo = "Conversación";
+    if (typeof c.escena !== "string") c.escena = "";
     c.mensajes = c.mensajes.filter(m => m && typeof m.texto === "string");
     c.mensajes.forEach(m => { if (!m.id) m.id = uid(); });
   });
@@ -729,6 +797,12 @@ function pintar(bajar) {
     const t = document.createElement("div");
     t.innerHTML = formatear(m.texto);
     d.appendChild(t);
+    if (m.cortado) {
+      const ct = document.createElement("div");
+      ct.className = "corte";
+      ct.textContent = "✂ Ответ оборван из-за лимита длины. Нажми на сообщение и выбери «➡ Continuar».";
+      d.appendChild(ct);
+    }
     if (m.id === seleccionado) {
       if (m.modelo && typeof m.ms === "number") {
         const dg = document.createElement("div");
@@ -874,13 +948,13 @@ $("btnMemoria").addEventListener("click", () => {
 // ===== Recuerdos de Sukuna (automáticos) =====
 $("btnRecuerdos").addEventListener("click", () => {
   pedirTexto("Recuerdos de Sukuna", datos.recuerdos, v => { datos.recuerdos = v.trim(); guardar(); },
-    "Notas que Сукуна va escribiendo solo mientras conversan. Puedes corregirlas, borrar líneas o vaciar todo.", 12);
+    "Notas que Сукуна va escribiendo solo mientras conversan (una por línea). Puedes corregirlas, borrar líneas o vaciar todo.", 12);
 });
 
 // ===== Progreso de japonés =====
 $("btnJapones").addEventListener("click", () => {
   pedirTexto("Mi progreso de japonés", datos.japones, v => { datos.japones = v.trim(); guardar(); },
-    "Lo que Сукуна sabe de tu japonés: nivel, vocabulario visto, gramática y errores frecuentes. Se actualiza solo con las lecciones y puedes corregirlo a mano.", 12);
+    "Lo que Сукуна sabe de tu japonés: nivel, vocabulario visto, gramática y errores frecuentes. Se actualiza solo y puedes corregirlo a mano.", 12);
 });
 
 // ===== Nuestra relación =====
@@ -889,21 +963,95 @@ $("btnRelacion").addEventListener("click", () => {
     "Lo que Сукуна sabe de la relación entre ustedes: cómo la viven, apodos, acuerdos y límites. Se actualiza solo y puedes corregirlo a mano.", 12);
 });
 
+// ===== Estado de esta conversación =====
+$("btnEscena").addEventListener("click", () => {
+  const c = activa();
+  pedirTexto("Estado de esta conversación", c.escena || "", v => { c.escena = v.trim(); guardar(); },
+    "Lo que Сукуна sabe del estado de ESTA conversación: dónde están, qué se estableció, hipótesis, promesas, opiniones y temas ya repetidos. Se actualiza solo y puedes corregirlo.", 12);
+});
+
 $("btnRecordarAhora").addEventListener("click", () => {
   cerrarMenu();
   extraerRecuerdos(activa(), true);
 });
 
-// ===== Iniciativa: botones =====
+// ===== Iniciativa: botón de activar/desactivar =====
 $("btnIniciativa").addEventListener("click", () => {
   datos.iniciativa = !datos.iniciativa;
   guardar(); pintarBotonInic();
   aviso(datos.iniciativa ? "✨ Сукуна сможет писать первым" : "Сукуна больше не пишет первым");
 });
-$("btnInicAhora").addEventListener("click", () => {
-  cerrarMenu();
-  intentarIniciativa(true);
-});
+
+// ===== Memoria: utilidades de listas de notas =====
+const CABS = ["RECUERDOS", "JAPONES", "RELACION", "ESCENA"];
+
+function parseNotas(t) {
+  return String(t || "").split("\n").map(l => l.trim().replace(/^[-•]\s+/, "").trim()).filter(Boolean);
+}
+function serializarNotas(arr) { return arr.map(n => "- " + n).join("\n"); }
+function limpiaNota(s) { return String(s).replace(/\s+/g, " ").trim().slice(0, 400); }
+function numerar(t) {
+  const a = parseNotas(t);
+  return a.length ? a.map((n, i) => (i + 1) + ". " + n).join("\n") : "(vacía)";
+}
+
+// Reparte la respuesta del modelo en las secciones (RECUERDOS, JAPONES, RELACION, ESCENA)
+function partirRespuesta(t) {
+  const pos = [];
+  CABS.forEach(c => {
+    const i = t.indexOf("===" + c + "===");
+    if (i >= 0) pos.push({ c: c, i: i, fin: i + c.length + 6 });
+  });
+  if (!pos.length) return null;
+  pos.sort((a, b) => a.i - b.i);
+  const out = {};
+  pos.forEach((p, k) => { out[p.c] = t.slice(p.fin, k + 1 < pos.length ? pos[k + 1].i : t.length); });
+  return out;
+}
+
+// Aplica los cambios (+ nueva, ~ N | texto, - N) a una lista de notas
+function aplicarCambios(textoActual, bloque, permitirAnadir) {
+  const orig = parseNotas(textoActual);
+  const rep = {}, del = new Set(), nuevas = [];
+  String(bloque || "").split("\n").forEach(raw => {
+    const l = raw.trim();
+    if (!l) return;
+    let m;
+    if ((m = l.match(/^\+\s*(.+)$/))) {
+      const n = limpiaNota(m[1]); if (n) nuevas.push(n);
+    } else if ((m = l.match(/^~\s*(\d+)\s*\|\s*(.+)$/))) {
+      const i = parseInt(m[1], 10) - 1, n = limpiaNota(m[2]);
+      if (i >= 0 && i < orig.length && n) rep[i] = n;
+    } else if ((m = l.match(/^[-−–]\s*(\d+)\s*$/))) {
+      const i = parseInt(m[1], 10) - 1;
+      if (i >= 0 && i < orig.length) del.add(i);
+    }
+  });
+  // Protección: si de golpe se borra más de la mitad, se ignoran los borrados
+  if (del.size > Math.max(4, Math.floor(orig.length * 0.5))) del.clear();
+
+  let cambiadas = 0, borradas = 0, anadidas = 0;
+  const res = [];
+  orig.forEach((n, i) => {
+    if (del.has(i)) { borradas++; return; }
+    if (rep[i] !== undefined && rep[i] !== n) { cambiadas++; res.push(rep[i]); return; }
+    res.push(n);
+  });
+  if (permitirAnadir) {
+    const existentes = new Set(res.map(x => x.toLowerCase()));
+    nuevas.slice(0, 8).forEach(n => {
+      if (!existentes.has(n.toLowerCase())) { res.push(n); existentes.add(n.toLowerCase()); anadidas++; }
+    });
+  }
+  return { texto: serializarNotas(res), anadidas: anadidas, cambiadas: cambiadas, borradas: borradas };
+}
+
+function avisoTamano(nombre, texto) {
+  const n = String(texto || "").length;
+  if (n >= LIM_DURO) return "AVISO: la lista " + nombre + " es demasiado larga (" + n + " caracteres) y NO acepta notas nuevas: reduce con ~ (fusionar) y - (eliminar).\n";
+  if (n > LIM_SUAVE) return "AVISO: la lista " + nombre + " es larga (" + n + " caracteres): fusiona notas parecidas y elimina las menos importantes con ~ y -.\n";
+  return "";
+}
 
 async function extraerRecuerdos(conv, forzar) {
   if (extrayendo) { if (forzar) aviso("Ya estoy actualizando los recuerdos…"); return; }
@@ -922,17 +1070,25 @@ async function extraerRecuerdos(conv, forzar) {
   extrayendo = true;
   if (forzar) aviso("🧠 Сукуна está repasando la conversación…");
   const hasta = conv.mensajes.length;
-  const dialogo = nuevos.slice(-20).map(m => (m.rol === "user" ? "ELLA" : "SUKUNA") + ": " + m.texto).join("\n\n");
+
+  const partesDialogo = nuevos.slice(-24).map(m => (m.rol === "user" ? "ELLA" : "SUKUNA") + ": " + String(m.texto).slice(0, 2500));
+  let dialogo = partesDialogo.join("\n\n");
+  while (dialogo.length > 10000 && partesDialogo.length > 1) { partesDialogo.shift(); dialogo = partesDialogo.join("\n\n"); }
+
   const hoy = new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
   const pedido = "FECHA DE HOY: " + hoy +
-    "\n\nNOTAS ACTUALES (RECUERDOS):\n" + (datos.recuerdos || "(todavía no hay notas)") +
-    "\n\nPROGRESO ACTUAL DE JAPONÉS:\n" + (datos.japones || "(todavía no hay notas)") +
-    "\n\nNOTAS ACTUALES DE LA RELACIÓN:\n" + (datos.relacion || "(todavía no hay notas)") +
     "\n\nCONVERSACIÓN NUEVA (modo " + (modoDe(conv) === "leccion" ? "lección" : "charla") + "):\n" + dialogo +
-    "\n\nDevuelve las tres listas completas y actualizadas, en el formato indicado.";
+    "\n\n=== LISTAS ACTUALES (numeradas) ===" +
+    "\n\nRECUERDOS:\n" + numerar(datos.recuerdos) +
+    "\n\nJAPONES:\n" + numerar(datos.japones) +
+    "\n\nRELACION:\n" + numerar(datos.relacion) +
+    "\n\nESCENA (de esta conversación):\n" + numerar(conv.escena) +
+    "\n\n" + avisoTamano("RECUERDOS", datos.recuerdos) + avisoTamano("JAPONES", datos.japones) +
+    avisoTamano("RELACION", datos.relacion) + avisoTamano("ESCENA", conv.escena) +
+    "Devuelve SOLO los cambios, en el formato indicado.";
 
   try {
-    const data = await pedir({ message: pedido, history: [], personaje: INSTRUCCION_MEMORIA }, 70000);
+    const data = await pedir({ message: pedido, history: [], personaje: INSTRUCCION_MEMORIA }, 80000);
 
     // Quita las marcas de bloque de código si Gemini las agrega
     const CERCA = String.fromCharCode(96, 96, 96);
@@ -941,31 +1097,41 @@ async function extraerRecuerdos(conv, forzar) {
     if (t.endsWith(CERCA)) t = t.slice(0, -3);
     t = t.trim();
 
-    const iR = t.indexOf(M_REC), iJ = t.indexOf(M_JAP), iL = t.indexOf(M_REL);
-    if (iR < 0 || iJ < 0 || iL < 0 || !(iR < iJ && iJ < iL)) throw new Error("formato inesperado");
-    const nuevoRec = t.slice(iR + M_REC.length, iJ).trim();
-    const nuevoJap = t.slice(iJ + M_JAP.length, iL).trim();
-    const nuevoRel = t.slice(iL + M_REL.length).trim();
+    const partes = partirRespuesta(t);
+    if (!partes) throw new Error("formato inesperado");
 
-    // Protección: si una lista llega vacía o se borra casi todo, se conserva la anterior
-    const seguro = (nuevo, viejo) => {
-      if (nuevo.length < 5) return viejo;
-      if (viejo.length > 400 && nuevo.length < viejo.length * 0.4) return viejo;
-      return nuevo.slice(0, 4000);
-    };
-    const antR = datos.recuerdos || "", antJ = datos.japones || "", antL = datos.relacion || "";
-    const nr = seguro(nuevoRec, antR), nj = seguro(nuevoJap, antJ), nl = seguro(nuevoRel, antL);
+    const prev = { rec: datos.recuerdos, jap: datos.japones, rel: datos.relacion, esc: conv.escena || "", eh: conv.extraidoHasta };
+    const tot = { a: 0, c: 0, b: 0 };
+    const campos = [["RECUERDOS", "recuerdos"], ["JAPONES", "japones"], ["RELACION", "relacion"], ["ESCENA", "escena"]];
+    campos.forEach(par => {
+      const cab = par[0], campo = par[1];
+      if (partes[cab] === undefined) return;
+      const actual = campo === "escena" ? (conv.escena || "") : (datos[campo] || "");
+      const r = aplicarCambios(actual, partes[cab], actual.length < LIM_DURO);
+      if (campo === "escena") conv.escena = r.texto; else datos[campo] = r.texto;
+      tot.a += r.anadidas; tot.c += r.cambiadas; tot.b += r.borradas;
+    });
 
-    if (nr !== antR || nj !== antJ || nl !== antL) {
-      datos.recuerdos = nr;
-      datos.japones = nj;
-      datos.relacion = nl;
-      aviso("🧠 Сукуна запомнил что-то");
-    } else if (forzar) {
-      aviso("Nada nuevo que recordar.");
+    if (!tot.a && !tot.c && !tot.b) {
+      conv.extraidoHasta = hasta;
+      guardar();
+      if (forzar) aviso("Nada nuevo que recordar.");
+      return;
     }
+
     conv.extraidoHasta = hasta;
-    guardar();
+    if (!guardarVerificado()) {
+      // No se pudo guardar de verdad: se deshace todo y se avisa
+      datos.recuerdos = prev.rec; datos.japones = prev.jap; datos.relacion = prev.rel;
+      conv.escena = prev.esc; conv.extraidoHasta = prev.eh;
+      aviso("⚠ No se pudo guardar la memoria (¿almacenamiento lleno?). Haz una copia de seguridad.");
+      return;
+    }
+    const resumen = [];
+    if (tot.a) resumen.push("+" + tot.a);
+    if (tot.c) resumen.push("изменено " + tot.c);
+    if (tot.b) resumen.push("удалено " + tot.b);
+    aviso("🧠 Сукуна запомнил: " + resumen.join(" · "));
   } catch (e) {
     if (forzar) aviso("No se pudo actualizar: " + e.message);
   } finally {
@@ -973,8 +1139,28 @@ async function extraerRecuerdos(conv, forzar) {
   }
 }
 
+// ===== Anti-repetición: lo que Sukuna ya hizo en sus últimas respuestas =====
+function antiRepeticion(conv) {
+  const ms = conv.mensajes.filter(m => m.rol === "model").slice(-6);
+  if (ms.length < 2) return "";
+  const gestos = [], aperturas = [];
+  ms.forEach(m => {
+    (String(m.texto).match(/\*[^*\n]+\*/g) || []).forEach(g => {
+      const s = g.slice(0, 70);
+      if (!gestos.includes(s)) gestos.push(s);
+    });
+    aperturas.push(String(m.texto).trim().slice(0, 50));
+  });
+  const preguntas = ms.slice(-3).filter(m => /\?[\s*»"')]*$/.test(String(m.texto).trim())).length;
+  let s = "ЧТО УЖЕ БЫЛО В ТВОИХ ПОСЛЕДНИХ ОТВЕТАХ (не повторяй это, придумай другое):";
+  if (gestos.length) s += "\nЖесты и действия: " + gestos.slice(-14).join(" | ");
+  s += "\nНачала сообщений: " + aperturas.map(a => "«" + a + "»").join(" | ");
+  if (preguntas >= 2) s += "\nПоследние ответы заканчивались вопросом: в этот раз закончи иначе (действием, паузой, наблюдением).";
+  return s;
+}
+
 // ===== Arma el texto de personalidad completo =====
-function armarPersonaje(modo) {
+function armarPersonaje(modo, conv) {
   const hoy = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
   let p = PERSONALIDAD + "\n\nТекущая дата: " + hoy + ".";
   if (datos.memoria) {
@@ -989,11 +1175,16 @@ function armarPersonaje(modo) {
   if (datos.relacion) {
     p += "\n\n14. Заметки об отношениях между вами (ты ведёшь их сам; опирайся на них и не откатывай то, что уже сложилось):\n" + datos.relacion;
   }
+  if (conv && conv.escena) {
+    p += "\n\n14.1. Состояние ЭТОГО разговора (заметки о сцене: что установлено, твои догадки и мнения, обещания, что она уже ответила, что уже слишком часто повторялось). Опирайся на них, не противоречь им и не выдавай догадки за факты:\n" + conv.escena;
+  }
   const dl = diasSinLeccion();
   const estudio = dl === null ? "уроков японского в приложении ещё не было."
     : dl === 0 ? "последний урок японского был сегодня."
     : "последний урок японского был " + dl + " дн. назад.";
-  p += "\n\n" + PROMPT_RELACION + "\n\nСостояние учёбы: " + estudio + "\n\n" + PROMPT_ESTILO;
+  p += "\n\n" + PROMPT_RELACION + "\n\nСостояние учёбы: " + estudio + "\n\n" + PROMPT_ESTILO + "\n\n" + PROMPT_CALIDAD;
+  const rep = conv ? antiRepeticion(conv) : "";
+  if (rep) p += "\n\n" + rep;
   if (modo === "leccion") {
     p += "\n\n" + PROMPT_LECCION;
   }
@@ -1002,64 +1193,60 @@ function armarPersonaje(modo) {
 
 // ===== Iniciativa: Sukuna escribe primero =====
 function hoyClave() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function textoSilencio(min) {
+  if (min < 120) return Math.max(1, Math.round(min)) + " мин.";
+  return Math.round(min / 60) + " ч.";
+}
 
-async function intentarIniciativa(forzar) {
-  if (iniciando || ocupado || extrayendo) { if (forzar) aviso("Espera un momento…"); return; }
+async function intentarIniciativa() {
+  if (iniciando || ocupado || extrayendo) return;
+  if (!datos.iniciativa) return;
+  if (document.visibilityState !== "visible") return;
+  if (document.body.classList.contains("menu") || $("modal").classList.contains("on") || $("modalCopia").classList.contains("on")) return;
+  if (input.value.trim()) return; // está escribiendo: no la interrumpe
+
   const conv = activa();
   const ahora = Date.now();
+  const h = new Date().getHours();
+  if (!(INIC.horaDesde <= 0 && INIC.horaHasta >= 24) && (h < INIC.horaDesde || h >= INIC.horaHasta)) return;
 
-  if (!forzar) {
-    if (!datos.iniciativa) return;
-    if (document.visibilityState !== "visible") return;
-    if (document.body.classList.contains("menu") || $("modal").classList.contains("on") || $("modalCopia").classList.contains("on")) return;
-    const h = new Date().getHours();
-    if (h < INIC.horaDesde || h >= INIC.horaHasta) return;
-    if (ahora - (datos.ultima || ahora) < INIC.silencioMinH * 3600000) return;
-    if (ahora - (datos.inicUltima || 0) < INIC.entreMinH * 3600000) return;
-    if (ahora - (datos.inicIntento || 0) < INIC.enfriaIntentoH * 3600000) return;
-    if (datos.inicDia === hoyClave() && (datos.inicCuenta || 0) >= INIC.maxDia) return;
-    const total = datos.convs.reduce((s, c) => s + c.mensajes.length, 0);
-    if (total < INIC.minMensajes) return;
-    const ult = conv.mensajes[conv.mensajes.length - 1];
-    if (ult && ult.inic) return; // su último mensaje sigue sin respuesta
-  }
+  const ult = conv.mensajes[conv.mensajes.length - 1];
+  const ultActividad = Math.max(datos.ultima || 0, ult ? (ult.t || 0) : 0);
+  if (ahora - ultActividad < INIC.silencioMinMin * 60000) return;
+  if (ahora - (datos.inicUltima || 0) < INIC.entreMinMin * 60000) return;
+  if (ahora - (datos.inicIntento || 0) < INIC.enfriaIntentoMin * 60000) return;
+  if (INIC.maxDia > 0 && datos.inicDia === hoyClave() && (datos.inicCuenta || 0) >= INIC.maxDia) return;
+  const total = datos.convs.reduce((s, c) => s + c.mensajes.length, 0);
+  if (total < INIC.minMensajes) return;
+  // Si su último mensaje sigue sin respuesta, espera un buen rato antes de escribir otra vez
+  if (ult && ult.inic && INIC.sinRespuestaH > 0 && ahora - (ult.t || 0) < INIC.sinRespuestaH * 3600000) return;
 
-  iniciando = true; inicMostrar = !!forzar; convIniciando = conv.id;
+  iniciando = true;
   inicCtrl = new AbortController();
   const ctrl = inicCtrl;
   datos.inicIntento = ahora; guardar();
-  if (forzar) { quitarError(); refrescarIndicador(); }
 
   const n0 = conv.mensajes.length;
   const modo = modoDe(conv);
-  const historial = conv.mensajes.slice(-20).map(aHistorial);
-  const horas = Math.max(0, Math.round((ahora - (datos.ultima || ahora)) / 3600000));
+  const historial = historialDe(conv);
+  const silencio = textoSilencio((ahora - (datos.ultima || ahora)) / 60000);
   const hora = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
-  let pedido = "[СЛУЖЕБНОЕ СООБЩЕНИЕ ПРИЛОЖЕНИЯ — это пишет не собеседница. Она только что открыла приложение. С её последнего сообщения прошло примерно " + horas + " ч., сейчас " + hora + ". " +
-    "Ты можешь написать ей первым.\n" +
-    "Если пишешь: 1–4 коротких предложения, в характере Сукуны. Можешь вернуться к прошлой теме из ваших разговоров или заметок, задать вопрос, который тебе правда интересен, поделиться наблюдением, в личном тоне научить её одному японскому слову или короткой фразе (с кандзи или кану, чтением и переводом) или (если сейчас режим урока) предложить небольшое задание. " +
-    "Учти раздел 15 и состояние учёбы: если с последнего урока прошло два дня или больше, предпочти напомнить о занятиях или предложить короткое задание в своём характере; если уроки были недавно, напиши личное сообщение, научи фразе или вернись к теме из ваших разговоров. Чередуй типы сообщений и не повторяй тип и формулировки своего предыдущего самостоятельного сообщения. " +
-    "Не требуй внимания, не упрекай её за молчание, не дави и не пиши, что скучал. Не притворяйся, что у тебя есть человеческая жизнь вне общения. Не пиши реплик и действий за неё. Не упоминай это служебное сообщение.\n";
-  if (forzar) {
-    pedido += "Она сама попросила тебя написать первым, так что молчать нельзя: напиши сообщение.]";
-  } else {
-    pedido += "Если сказать нечего или не хочется, ответь ровно одним словом: [SILENCIO]]";
-  }
+  const pedido = "[СЛУЖЕБНОЕ СООБЩЕНИЕ ПРИЛОЖЕНИЯ — это пишет не собеседница. Она сейчас в приложении, но молчит уже примерно " + silencio + " Сейчас " + hora + ". Ты можешь написать ей первым.\n" +
+    "Если пишешь: 2–6 предложений, в характере Сукуны, в соответствии с разделами 16–17. Варианты: вернуться к теме из ваших разговоров или заметок; задать вопрос о ней (день, вкусы, привычки, воспоминания, мнения); рассказать короткую историю из своего прошлого (эпоха Хэйан и не только); поделиться наблюдением; сменить обстановку или предложить занятие; научить одному японскому слову или короткой фразе (кандзи или кану, чтение, перевод); если сейчас режим урока, предложить небольшое задание. " +
+    "Учти раздел 15 и состояние учёбы: если с последнего урока прошло два дня или больше, предпочти напомнить о занятиях; иначе выбери личное сообщение. Чередуй типы сообщений и не повторяй тип и формулировки своего предыдущего самостоятельного сообщения.\n" +
+    "Не требуй внимания, не упрекай её за молчание, не дави и не пиши, что скучал. Не пиши реплик и действий за неё. Не упоминай это служебное сообщение.\n" +
+    "Склоняйся к тому, чтобы написать, если есть что сказать. Промолчи, только если действительно нечего добавить: тогда ответь ровно одним словом: [SILENCIO]]";
 
   try {
-    const data = await pedir({ message: pedido, history: historial, personaje: armarPersonaje(modo) }, 60000, ctrl);
+    const data = await pedir({ message: pedido, history: historial, personaje: armarPersonaje(modo, conv) }, 80000, ctrl);
 
     const texto = String(data.reply).trim();
-    const silencio = /\[SILENCIO\]/i.test(texto) && texto.length < 40;
-    if (silencio) {
-      if (forzar) aviso("Сукуна решил промолчать. Попробуй ещё раз.");
-      return;
-    }
+    if (/\[SILENCIO\]/i.test(texto) && texto.length < 40) return;
     // Si mientras tanto le escribiste o borraste la conversación, se descarta
     if (!datos.convs.includes(conv) || conv.mensajes.length !== n0) return;
 
-    conv.mensajes.push({ id: uid(), rol: "model", texto, inic: true, t: Date.now(), modelo: data.modelo, ms: data.ms, fallos: data.fallos });
+    conv.mensajes.push({ id: uid(), rol: "model", texto: texto, inic: true, t: Date.now(), modelo: data.modelo, ms: data.ms, fallos: data.fallos, cortado: data.fin === "MAX_TOKENS" });
     datos.inicUltima = Date.now();
     const dia = hoyClave();
     if (datos.inicDia !== dia) { datos.inicDia = dia; datos.inicCuenta = 0; }
@@ -1068,18 +1255,21 @@ async function intentarIniciativa(forzar) {
     if (datos.activa === conv.id) pintar(true);
     aviso("✦ Сукуна написал тебе первым");
   } catch (e) {
-    if (forzar && e.message !== "cancelado") aviso("No se pudo: " + e.message);
+    // En segundo plano los errores no molestan
   } finally {
-    iniciando = false; inicMostrar = false; convIniciando = null; inicCtrl = null;
-    refrescarIndicador();
+    iniciando = false; inicCtrl = null;
   }
 }
 
 // ===== Generar una respuesta de Sukuna =====
 async function generar(conv, textoUsuario, historial) {
   const t0 = Date.now();
-  const data = await pedir({ message: textoUsuario, history: historial, personaje: armarPersonaje(modoDe(conv)) }, 70000);
-  return { id: uid(), rol: "model", texto: data.reply, t: Date.now(), modelo: data.modelo, ms: data.ms, fallos: data.fallos, tot: Date.now() - t0 };
+  const data = await pedir({ message: textoUsuario, history: historial, personaje: armarPersonaje(modoDe(conv), conv) }, 90000);
+  return {
+    id: uid(), rol: "model", texto: data.reply, t: Date.now(),
+    modelo: data.modelo, ms: data.ms, fallos: data.fallos, tot: Date.now() - t0,
+    cortado: data.fin === "MAX_TOKENS"
+  };
 }
 
 // ===== Enviar mensaje =====
@@ -1091,8 +1281,8 @@ async function enviar() {
   if (inicCtrl) inicCtrl.abort(); // si Sukuna preparaba un mensaje por su cuenta, se cancela
 
   const conv = activa();
-  const historial = conv.mensajes.slice(-30).map(aHistorial);
-  const msg = { id: uid(), rol: "user", texto, t: Date.now() };
+  const historial = historialDe(conv);
+  const msg = { id: uid(), rol: "user", texto: texto, t: Date.now() };
   conv.mensajes.push(msg);
   if (conv.autotitulo) { conv.titulo = texto.slice(0, 32) + (texto.length > 32 ? "…" : ""); conv.autotitulo = false; }
   datos.ultima = Date.now();
@@ -1119,7 +1309,7 @@ async function enviar() {
     if (datos.activa === conv.id) pintar(true); else refrescarIndicador();
   }
 
-  // En segundo plano, con calma: actualiza recuerdos, progreso de japonés y relación
+  // En segundo plano, con calma: actualiza recuerdos, progreso, relación y estado de la escena
   if (ok) setTimeout(() => extraerRecuerdos(conv, false), 15000);
 }
 
@@ -1136,7 +1326,7 @@ async function regenerar() {
   quitarError(); seleccionado = null;
   if (inicCtrl) inicCtrl.abort();
 
-  const historial = conv.mensajes.slice(Math.max(0, n - 2 - 30), n - 2).map(aHistorial);
+  const historial = historialDe(conv, n - 2);
   ocupado = true; convEnviando = conv.id; boton.disabled = true;
   pintar(false);
 
@@ -1166,12 +1356,12 @@ form.addEventListener("submit", e => { e.preventDefault(); enviar(); });
 pintar(true);
 pintarBotonInic();
 
-// Revisa si Sukuna quiere escribirte: al abrir, al volver a la app y cada 5 minutos
-setTimeout(() => intentarIniciativa(false), 3000);
+// Revisa si Sukuna quiere escribirte: al abrir, al volver a la app y cada 2 minutos
+setTimeout(intentarIniciativa, 3000);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") setTimeout(() => intentarIniciativa(false), 2000);
+  if (document.visibilityState === "visible") setTimeout(intentarIniciativa, 2000);
 });
-setInterval(() => intentarIniciativa(false), 5 * 60 * 1000);
+setInterval(intentarIniciativa, 2 * 60 * 1000);
 </script>
 </body>
 </html>
